@@ -1,8 +1,8 @@
 // The status code for a gemini Response along with a <META> field that holds
 // more information about the Response body.
-struct Status {
-    code: u8,
-    meta: String,
+pub struct Status {
+    pub code: u8,
+    pub meta: String,
 }
 
 impl Status {
@@ -16,33 +16,31 @@ impl Status {
 }
 
 // A gemini Response containing:
-//      Status,
-//      mimetype (default: text/gemini).
-//      charset {optional},
-//      body.
-struct Response {
-    status: Status,
-    mimetype: String,
-    charset: String,
-    body: String,
+//    - Status,
+//    - mimetype (default: text/gemini).
+//    - charset {optional},
+//    - body.
+pub struct Response {
+    pub status: Status,
+    pub mimetype: String,
+    pub charset: String,
+    pub body: String,
 }
 
 impl Response {
     fn new(data: &str) -> Self {
-        // Split response status and body on gemini spec CRLF.
         let tokens: Vec<&str> = data.splitn(2, "\r\n").collect();
-        status = Status::new(tokens[0]);
+        let status = Status::new(tokens[0]);
+        let mimetype: &str;
+        let charset: &str;
+
         match status.code {
             // TODO: 1x input support
-            20..29 => {
-                let mimetype;
-                let charset;
-                if (status.meta != "") {
-                    let mime_tokens: Vec<&str> = status.meta.split(";")
-                        .collect()
-                        .trim();
-                    mimetype = mime_tokens[0];
-                    if (mime_tokens.len() < 2) {
+            20..=29 => {
+                if status.meta != "" {
+                    let mime_tokens: Vec<&str> = status.meta.split(";").collect();
+                    mimetype = mime_tokens[0].trim();
+                    if mime_tokens.len() < 2 {
                         charset = "UTF-8";
                     } else {
                         // TODO: handle charset extraction from meta.
@@ -51,8 +49,14 @@ impl Response {
                     mimetype = "text/gemini";
                     charset = "UTF-8";
                 }
-                Response { status, mimetype, charset, tokens[1]  }
             }
+        }
+
+        Response {
+            status: status,
+            mimetype: mimetype.to_owned(),
+            charset: charset.to_owned(),
+            body: tokens[1].to_owned(),
         }
     }
 }
