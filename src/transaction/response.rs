@@ -1,62 +1,51 @@
-// The status code for a gemini Response along with a <META> field that holds
-// more information about the Response body.
-pub struct Status {
-    pub code: u8,
-    pub meta: String,
-}
-
-impl Status {
-    fn new(header: &str) -> Self {
-        let tokens: Vec<&str> = header.splitn(2, " ").collect();
-        Status {
-            code: tokens[0].parse().unwrap(),
-            meta: tokens[1].to_owned()
-        }
-    }
-}
-
 // A gemini Response containing:
 //    - Status,
 //    - mimetype (default: text/gemini).
 //    - charset {optional},
 //    - body.
+#[derive(Debug)]
 pub struct Response {
-    pub status: Status,
+    pub status: u8,
     pub mimetype: String,
     pub charset: String,
     pub body: String,
 }
 
 impl Response {
-    fn new(data: &str) -> Self {
-        let tokens: Vec<&str> = data.splitn(2, "\r\n").collect();
-        let status = Status::new(tokens[0]);
-        let mimetype: &str;
-        let charset: &str;
+    pub fn new(data: &str) -> Self {
+        // data_tokens[0] is the response header
+        // data_tokens[1] is the response body
+        let data_tokens: Vec<&str> = data.splitn(2, "\r\n").collect();
 
-        match status.code {
-            // TODO: 1x input support
+        // header_tokens[0] is the <STATUS> field.
+        // header_tokens[1] is the <META> field.
+        let header_tokens: Vec<&str> = data_tokens[0].splitn(2, " ").collect();
+        let status: u8 = header_tokens[0].parse().unwrap();
+        let mut meta: &str = header_tokens[1];
+        let charset = "utf-8";  // TODO: will need to be mut once charset is extracted.
+
+        match status {
+            // TODO: Handle 1x statuses.
             20..=29 => {
-                if status.meta != "" {
-                    let mime_tokens: Vec<&str> = status.meta.split(";").collect();
-                    mimetype = mime_tokens[0].trim();
-                    if mime_tokens.len() < 2 {
-                        charset = "UTF-8";
-                    } else {
-                        // TODO: handle charset extraction from meta.
-                    }
-                } else {
-                    mimetype = "text/gemini";
-                    charset = "UTF-8";
+                if meta == "" {
+                    meta = "text/gemini";
+                }
+                // TODO: extract charset here.
+                Response {
+                    status: status,
+                    mimetype: meta.to_owned(),
+                    charset: charset.to_owned(),
+                    body: data_tokens[1].to_owned(),
                 }
             }
-        }
-
-        Response {
-            status: status,
-            mimetype: mimetype.to_owned(),
-            charset: charset.to_owned(),
-            body: tokens[1].to_owned(),
+            _ => { 
+                Response {
+                    status: 20,
+                    mimetype: "text/gemini".to_owned(),
+                    charset: "utf-8".to_owned(),
+                    body: "This status is currently unhandled.".to_owned(),
+                }
+            }
         }
     }
 }
