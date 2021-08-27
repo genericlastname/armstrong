@@ -1,20 +1,12 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
 
-mod response;
-
-use response::Response;
+use crate::transaction::response::Response;
 
 // Visits the specified url at the given port and returns the resulting
 // Response.
-pub fn visit(url: &str, port: &str) -> Response {
-    let destination = format!("{}:{}\r\n", url, port);
-    let mut stream = TcpStream::connect(&destination)?;
-    stream.write(url.as_bytes())?;
-
-    let mut raw_data: Vec<u8> = vec![];
-    stream.read_to_end(&mut raw_data)?;
-
-    let content = String::from_utf8_lossy(&raw_data);
-    Response::new(&content);
+pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
+    let for_tcp = format!("{}:{}", address, port);
+    let for_dns = format!("{}", address);
+    let request = format!("{}://{}:{}/{}\r\n", scheme, address, port, path);
 }

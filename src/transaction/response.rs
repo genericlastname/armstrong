@@ -1,5 +1,5 @@
 // A gemini Response containing:
-//    - Status,
+//    - status,
 //    - mimetype (default: text/gemini).
 //    - charset {optional},
 //    - body.
