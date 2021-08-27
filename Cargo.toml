@@ -4,3 +4,5 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+webpki = "0.22.0"
+rustls = { version="0.19.1", features=["dangerous_configuration"] }
