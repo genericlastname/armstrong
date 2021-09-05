@@ -15,8 +15,10 @@ pub struct GemtextToken {
     pub data: &str,
 }
 
+// Take in a string of gemtext and convert it into a vector of GemtextTokens
+// with a kind and data.
 pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
-    let text_tokens: vec<&str> = raw_text.split(" ").collect();
+    let text_tokens: vec<&str> = raw_text.split(&[' ', '\n'][..]).collect();
     let mut gemtext_token_chain = Vec::new();
     let mut mode: TokenKind = TokenKind::Text;
     let mut current: &str;
@@ -36,7 +38,7 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
         }
         // Tie off the current GemtextToken and append it to the chain at
         // paragraph boundary.
-        if token == "\n" || token == "\r\n" {
+        if token == "\n" {
             gemtext_token_chain.push(GemtextToken {
                 kind: mode,
                 data: current,
