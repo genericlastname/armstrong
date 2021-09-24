@@ -1,5 +1,8 @@
-use transaction::response::Response;
-use transaction::visit::visit;
+use gemtext::parse_gemtext;
+// use transaction::response::Response;
+// use transaction::visit::visit;
+
+pub mod gemtext;
 
 pub mod transaction {
     pub mod response;
@@ -7,6 +10,8 @@ pub mod transaction {
 }
 
 fn main() {
-    let r: Response = visit("gemini", "gemini.circumlunar.space", "1965", "");
-    println!("{}", r.body);
+    let tokens: Vec<gemtext::GemtextToken> = parse_gemtext("Hello world\n# Welcome to Rust\n");
+    for token in tokens {
+        println!("{}", token);
+    }
 }
