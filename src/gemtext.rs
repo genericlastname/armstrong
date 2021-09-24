@@ -13,6 +13,8 @@ pub enum TokenKind {
 pub struct GemtextToken {
     pub kind: TokenKind,
     pub data: String,
+    pub extra: String,  // Right now this will be empty except when links are
+                        // named, when it will hold the user friendly name.
 }
 
 impl std::fmt::Display for GemtextToken {
@@ -42,7 +44,7 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
             _     => { mode = TokenKind::Text; },
         }
 
-        if mode == TokenKind::Text && text_tokens.len() > 1{
+        if mode == TokenKind::Text && text_tokens.len() > 1 {
             token_data = format!("{} {}", text_tokens[0], text_tokens[1]);
         } else if mode != TokenKind::Text && text_tokens.len() > 1 {
             token_data = text_tokens[1].to_owned();
@@ -50,10 +52,32 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
             token_data = text_tokens[0].to_owned();
         }
 
-        gemtext_token_chain.push(GemtextToken {
-            kind: mode,
-            data: token_data,
-        });
+        if mode == TokenKind::Link {
+            let token_copy = token_data.clone();
+            let link_parts: Vec<&str> = token_copy.splitn(2, " ").collect();
+
+            // If the link has user friendly name store it in extra, otherwise
+            // keep it empty.
+            if link_parts.len() > 1 {
+                gemtext_token_chain.push(GemtextToken {
+                    kind: mode,
+                    data: link_parts[0].to_owned(),
+                    extra: link_parts[1].to_owned(),
+                });
+            } else {
+                gemtext_token_chain.push(GemtextToken {
+                    kind: mode,
+                    data: link_parts[0].to_owned(),
+                    extra: "".to_owned(),
+                });
+            }
+        } else {
+            gemtext_token_chain.push(GemtextToken {
+                kind: mode,
+                data: token_data,
+                extra: "".to_owned(),
+            });
+        }
     }
     
     gemtext_token_chain
