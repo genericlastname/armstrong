@@ -1,4 +1,4 @@
-use gemtext::parse_gemtext;
+// use gemtext::parse_gemtext;
 // use transaction::response::Response;
 // use transaction::visit::visit;
 
@@ -10,8 +10,5 @@ pub mod transaction {
 }
 
 fn main() {
-    let tokens: Vec<gemtext::GemtextToken> = parse_gemtext("Hello world\n# Welcome to Rust\n");
-    for token in tokens {
-        println!("{}", token);
-    }
+    println!("Hello I'm not setup yet, try running `cargo test`");
 }
