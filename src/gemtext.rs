@@ -3,7 +3,7 @@ pub enum TokenKind {
     Text,
     Link,
     UnorderedList,
-    Blockquotes,
+    Blockquote,
     Heading,
     SubHeading,
     SubSubHeading,
@@ -34,7 +34,7 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
         match text_tokens[0] {
             "=>"  => { mode = TokenKind::Link; },
             "*"   => { mode = TokenKind::UnorderedList; },
-            ">"   => { mode = TokenKind::Blockquotes; },
+            ">"   => { mode = TokenKind::Blockquote; },
             "###" => { mode = TokenKind::SubSubHeading; },
             "##"  => { mode = TokenKind::SubHeading; },
             "#"   => { mode = TokenKind::Heading; },
@@ -57,4 +57,68 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
     }
     
     gemtext_token_chain
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parser_handles_text() {
+        let text = "Hello world this is example text";
+        let parsed: Vec<GemtextToken> = parse_gemtext(text);
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(parsed[0].kind, TokenKind::Text);
+        assert_eq!(parsed[0].data, text);
+    }
+
+    #[test]
+    fn parser_handles_links() {
+        let raw_text = "=> www.example.com";
+        let text_data = "www.example.com";
+        let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(parsed[0].kind, TokenKind::Link);
+        assert_eq!(parsed[0].data, text_data);
+    }
+
+    #[test]
+    fn parser_handles_lists() {
+        let raw_text = "* Item";
+        let text_data = "Item";  // The text data after parsing.
+        let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(parsed[0].kind, TokenKind::UnorderedList);
+        assert_eq!(parsed[0].data, text_data);
+    }
+
+    #[test]
+    fn parser_handles_blockquotes() {
+        let raw_text = "> block quote";
+        let text_data = "block quote";
+        let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(parsed[0].kind, TokenKind::Blockquote);
+        assert_eq!(parsed[0].data, text_data);
+    }
+
+    #[test]
+    fn parser_handles_headings() {
+        let raw_text =
+            "\
+            # Heading\n\
+            ## SubHeading\n\
+            ### SubSubHeading";
+        let line0 = "Heading";
+        let line1 = "SubHeading";
+        let line2 = "SubSubHeading";
+        let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
+        assert_eq!(parsed.len(), 3);
+        assert_eq!(parsed[0].kind, TokenKind::Heading);
+        assert_eq!(parsed[1].kind, TokenKind::SubHeading);
+        assert_eq!(parsed[2].kind, TokenKind::SubSubHeading);
+        assert_eq!(parsed[0].data, line0);
+        assert_eq!(parsed[1].data, line1);
+        assert_eq!(parsed[2].data, line2);
+    }
 }
