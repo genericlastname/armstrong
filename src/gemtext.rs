@@ -13,6 +13,8 @@ pub enum TokenKind {
 pub struct GemtextToken {
     pub kind: TokenKind,
     pub data: String,
+    pub extra: String,  // Right now this will be empty except when links are
+                        // named, when it will hold the user friendly name.
 }
 
 impl std::fmt::Display for GemtextToken {
@@ -53,6 +55,7 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
         gemtext_token_chain.push(GemtextToken {
             kind: mode,
             data: token_data,
+            extra: "".to_owned(),
         });
     }
     
