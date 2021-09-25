@@ -30,9 +30,8 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
     let raw_text_lines: Vec<&str> = raw_text.split("\n").collect();
 
     for line in raw_text_lines {
-        let token_data: String;
         let mode: TokenKind;
-        let text_tokens: Vec<&str> = line.splitn(2, ' ').collect();
+        let text_tokens: Vec<&str> = line.splitn(3, ' ').collect();
         match text_tokens[0] {
             "=>"  => { mode = TokenKind::Link; },
             "*"   => { mode = TokenKind::UnorderedList; },
@@ -44,41 +43,39 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
             _     => { mode = TokenKind::Text; },
         }
 
-        if mode == TokenKind::Text && text_tokens.len() > 1 {
-            token_data = format!("{} {}", text_tokens[0], text_tokens[1]);
-        } else if mode != TokenKind::Text && text_tokens.len() > 1 {
-            token_data = text_tokens[1].to_owned();
-        } else {
-            token_data = text_tokens[0].to_owned();
-        }
+        match text_tokens.len() {
+            3 => {
+                if mode == TokenKind::Link {
+                    gemtext_token_chain.push(GemtextToken {
+                        kind: mode,
+                        data: text_tokens[1].to_owned(),
+                        extra: text_tokens[2].to_owned(),
+                    });
+                } else if mode == TokenKind::Text {
+                    // Combine [1] and [2] in other parse modes.
+                    gemtext_token_chain.push(GemtextToken {
+                        kind: mode,
+                        data: format!("{} {} {}", text_tokens[0], text_tokens[1], text_tokens[2]),
+                        extra: "".to_owned(),
+                    });
 
-        // TODO: The best thing to do would be to split raw_text into 3 and
-        // check for the 3rd extra data token only if mode == TokenKind::Link.
-        if mode == TokenKind::Link {
-            let token_copy = token_data.clone();
-            let link_parts: Vec<&str> = token_copy.splitn(2, " ").collect();
-
-            // If the link has user friendly name store it in extra, otherwise
-            // keep it empty.
-            if link_parts.len() > 1 {
+                } else {
+                    // Combine [1] and [2] in other parse modes.
+                    gemtext_token_chain.push(GemtextToken {
+                        kind: mode,
+                        data: format!("{} {}", text_tokens[1], text_tokens[2]),
+                        extra: "".to_owned(),
+                    });
+                }
+            },
+            2 => {
                 gemtext_token_chain.push(GemtextToken {
                     kind: mode,
-                    data: link_parts[0].to_owned(),
-                    extra: link_parts[1].to_owned(),
-                });
-            } else {
-                gemtext_token_chain.push(GemtextToken {
-                    kind: mode,
-                    data: link_parts[0].to_owned(),
+                    data: text_tokens[1].to_owned(),
                     extra: "".to_owned(),
                 });
-            }
-        } else {
-            gemtext_token_chain.push(GemtextToken {
-                kind: mode,
-                data: token_data,
-                extra: "".to_owned(),
-            });
+            },
+            _ => {},
         }
     }
     
