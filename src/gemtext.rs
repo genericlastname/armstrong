@@ -52,6 +52,8 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
             token_data = text_tokens[0].to_owned();
         }
 
+        // TODO: The best thing to do would be to split raw_text into 3 and
+        // check for the 3rd extra data token only if mode == TokenKind::Link.
         if mode == TokenKind::Link {
             let token_copy = token_data.clone();
             let link_parts: Vec<&str> = token_copy.splitn(2, " ").collect();
@@ -104,6 +106,18 @@ mod tests {
         assert_eq!(parsed.len(), 1);
         assert_eq!(parsed[0].kind, TokenKind::Link);
         assert_eq!(parsed[0].data, text_data);
+    }
+
+    #[test]
+    fn parser_handles_links_with_names() {
+        let raw_text = "=> www.example.com Example Link";
+        let text_data = "www.example.com";
+        let extra_data = "Example Link";
+        let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(parsed[0].kind, TokenKind::Link);
+        assert_eq!(parsed[0].data, text_data);
+        assert_eq!(parsed[0].extra, extra_data);
     }
 
     #[test]
