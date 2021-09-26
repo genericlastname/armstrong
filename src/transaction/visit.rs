@@ -9,10 +9,25 @@ pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
     let _for_tcp = format!("{}:{}", address, port);
     let _for_dns = format!("{}", address);
     let _request = format!("{}://{}:{}/{}\r\n", scheme, address, port, path);
+
     Response {
         status: 255,
         mimetype: "Dummy mimetype".to_owned(),
         charset: "Dummy charset".to_owned(),
         body: "Dummy body".to_owned(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn visit_returns_dummy_response() {
+        let response: Response = visit("", "", "", "");
+        assert_eq!(response.status, 255);
+        assert_eq!(response.mimetype, "Dummy mimetype");
+        assert_eq!(response.charset, "Dummy charset");
+        assert_eq!(response.body, "Dummy body");
     }
 }
