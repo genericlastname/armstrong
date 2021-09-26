@@ -28,10 +28,13 @@ impl std::fmt::Display for GemtextToken {
 pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
     let mut gemtext_token_chain = Vec::new();
     let raw_text_lines: Vec<&str> = raw_text.split("\n").collect();
+    let mut curr_pft_state: bool = false;
+    let mut prev_pft_state: bool = false;
 
     for line in raw_text_lines {
         let mode: TokenKind;
         let text_tokens: Vec<&str> = line.splitn(3, ' ').collect();
+
         match text_tokens[0] {
             "=>"  => { mode = TokenKind::Link; },
             "*"   => { mode = TokenKind::UnorderedList; },
@@ -39,43 +42,67 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
             "###" => { mode = TokenKind::SubSubHeading; },
             "##"  => { mode = TokenKind::SubHeading; },
             "#"   => { mode = TokenKind::Heading; },
-            // TODO: Support finding both sides of PreFormattedText.
-            _     => { mode = TokenKind::Text; },
+            "```" => { 
+                curr_pft_state = !curr_pft_state;
+                prev_pft_state = false;
+                mode = TokenKind::PreFormattedText;
+            },
+            _     => {
+                if curr_pft_state {
+                    mode = TokenKind::PreFormattedText;
+                } else {
+                    mode = TokenKind::Text;
+                }
+            },
         }
 
-        match text_tokens.len() {
-            3 => {
-                if mode == TokenKind::Link {
+        if !curr_pft_state {
+            match text_tokens.len() {
+                3 => {
+                    if mode == TokenKind::Link {
+                        gemtext_token_chain.push(GemtextToken {
+                            kind: mode,
+                            data: text_tokens[1].to_owned(),
+                            extra: text_tokens[2].to_owned(),
+                        });
+                    } else if mode == TokenKind::Text {
+                        // Combine [0], [1], and [2] since Text doesn't have a leading symbol.
+                        gemtext_token_chain.push(GemtextToken {
+                            kind: mode,
+                            data: format!("{} {} {}",
+                                text_tokens[0],
+                                text_tokens[1],
+                                text_tokens[2]),
+                            extra: "".to_owned(),
+                        });
+                    } else {
+                        // Combine [1] and [2] in other parse modes.
+                        gemtext_token_chain.push(GemtextToken {
+                            kind: mode,
+                            data: format!("{} {}", text_tokens[1], text_tokens[2]),
+                            extra: "".to_owned(),
+                        });
+                    }
+                },
+                2 => {
                     gemtext_token_chain.push(GemtextToken {
                         kind: mode,
                         data: text_tokens[1].to_owned(),
-                        extra: text_tokens[2].to_owned(),
-                    });
-                } else if mode == TokenKind::Text {
-                    // Combine [1] and [2] in other parse modes.
-                    gemtext_token_chain.push(GemtextToken {
-                        kind: mode,
-                        data: format!("{} {} {}", text_tokens[0], text_tokens[1], text_tokens[2]),
                         extra: "".to_owned(),
                     });
-
-                } else {
-                    // Combine [1] and [2] in other parse modes.
-                    gemtext_token_chain.push(GemtextToken {
-                        kind: mode,
-                        data: format!("{} {}", text_tokens[1], text_tokens[2]),
-                        extra: "".to_owned(),
-                    });
-                }
-            },
-            2 => {
+                },
+                _ => {},
+            }
+        } else {
+            if prev_pft_state {
                 gemtext_token_chain.push(GemtextToken {
                     kind: mode,
-                    data: text_tokens[1].to_owned(),
+                    data: format!("{} {} {}", text_tokens[0], text_tokens[1], text_tokens[2]),
                     extra: "".to_owned(),
                 });
-            },
-            _ => {},
+            } else {
+                prev_pft_state = true;
+            }
         }
     }
     
@@ -155,5 +182,22 @@ mod tests {
         assert_eq!(parsed[0].data, line0);
         assert_eq!(parsed[1].data, line1);
         assert_eq!(parsed[2].data, line2);
+    }
+
+    #[test]
+    fn parser_handles_pft() {
+        let raw_text =
+            "```\n\
+            This text is unformatted.\n\
+            This is the second line.\n\
+            ```";
+        let line0 = "This text is unformatted.";
+        let line1 = "This is the second line.";
+        let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
+        assert_eq!(parsed.len(), 2);
+        assert_eq!(parsed[0].kind, TokenKind::PreFormattedText);
+        assert_eq!(parsed[1].kind, TokenKind::PreFormattedText);
+        assert_eq!(parsed[0].data, line0);
+        assert_eq!(parsed[1].data, line1);
     }
 }
