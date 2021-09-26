@@ -43,7 +43,7 @@ impl Response {
                     status: 20,
                     mimetype: "text/gemini".to_owned(),
                     charset: "utf-8".to_owned(),
-                    body: "This status is currently unhandled.".to_owned(),
+                    body: format!("Status {} is currently unhandled", status),
                 }
             }
         }
