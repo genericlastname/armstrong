@@ -1,10 +1,7 @@
-// use gemtext::parse_gemtext;
-// use transaction::response::Response;
-// use transaction::visit::visit;
-
 pub mod gemtext;
 
 pub mod transaction {
+    pub mod dummy_verifier;
     pub mod response;
     pub mod visit;
 }

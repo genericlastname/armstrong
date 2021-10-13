@@ -15,6 +15,7 @@ impl Response {
     pub fn new(data: &str) -> Self {
         // data_tokens[0] is the response header
         // data_tokens[1] is the response body
+        // TODO: Support \r\n AND bare \n as valid separators
         let data_tokens: Vec<&str> = data.splitn(2, "\r\n").collect();
 
         // header_tokens[0] is the <STATUS> field.
@@ -22,7 +23,7 @@ impl Response {
         let header_tokens: Vec<&str> = data_tokens[0].splitn(2, " ").collect();
         let status: u8 = header_tokens[0].parse().unwrap();
         let mut meta: &str = header_tokens[1];
-        let charset = "utf-8";  // TODO: will need to be mut once charset is extracted.
+        let charset = "utf-8";
 
         match status {
             // TODO: Handle 1x statuses.
@@ -43,7 +44,7 @@ impl Response {
                     status: 20,
                     mimetype: "text/gemini".to_owned(),
                     charset: "utf-8".to_owned(),
-                    body: "This status is currently unhandled.".to_owned(),
+                    body: format!("Status {} is currently unhandled", status),
                 }
             }
         }
