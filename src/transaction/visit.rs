@@ -1,21 +1,58 @@
-// use std::io::{Read, Write};
-// use std::net::TcpStream;
+use std::convert::TryInto;
+use std::io::{Read, Write};
+use std::net::TcpStream;
+use std::sync::Arc;
 
 use crate::transaction::response::Response;
+// use crate::transaction::dummy_verifier::DummyVerifier;
 
 // Visits the specified url at the given port and returns the resulting
 // Response.
 pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
-    let _for_tcp = format!("{}:{}", address, port);
-    let _for_dns = format!("{}", address);
-    let _request = format!("{}://{}:{}/{}\r\n", scheme, address, port, path);
+    let for_tcp = format!("{}:{}", address, port);
+    // let for_dns = format!("{}", address);
+    let request = format!("{}://{}:{}/{}\r\n", scheme, address, port, path);
+    let mut data = Vec::new();
 
-    Response {
-        status: 255,
-        mimetype: "Dummy mimetype".to_owned(),
-        charset: "Dummy charset".to_owned(),
-        body: "Dummy body".to_owned(),
+    // TLS stuff.
+    let mut root_store = rustls::RootCertStore::empty();
+    root_store.add_server_trust_anchors(
+        webpki_roots::TLS_SERVER_ROOTS
+        .0
+        .iter()
+        .map(|ta| {
+            rustls::OwnedTrustAnchor::from_subject_spki_name_constraints(
+                ta.subject,
+                ta.spki,
+                ta.name_constraints,
+            )
+        })
+    );
+    let config = rustls::ClientConfig::builder()
+        .with_safe_defaults()
+        .with_root_certificates(root_store)
+        .with_no_client_auth();
+    let rc_config = Arc::new(config);
+    // let dns_name = webpki::DnsNameRef::try_from_ascii_str(&for_dns).unwrap();
+    let hostname: rustls::ServerName = address.try_into().unwrap();
+    let mut client = rustls::ClientConnection::new(rc_config, hostname)
+        .expect("Can't open connection.");
+
+    // Open gemini connection
+    println!("{}", for_tcp);
+    let mut socket = TcpStream::connect(for_tcp)
+        .expect("Can't connect to socket");
+    let mut stream = rustls::Stream::new(&mut client, &mut socket);
+
+    stream.write(request.as_bytes()).unwrap();
+    while client.wants_read() {
+        client.read_tls(&mut socket).unwrap();
+        client.process_new_packets().unwrap();
+        client.reader().read_to_end(&mut data).unwrap();
     }
+    let raw_content = String::from_utf8_lossy(&data).to_string();
+
+    Response::new(&raw_content)
 }
 
 #[cfg(test)]
