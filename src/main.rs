@@ -5,6 +5,7 @@
 pub mod gemtext;
 
 pub mod transaction {
+    pub mod dummy_verifier;
     pub mod response;
     pub mod visit;
 }
@@ -16,5 +17,5 @@ fn main() {
         "carcosa.net",
         "1965",
         "");
-    // println!("{}", r.body);
+    println!("{}", r.body);
 }
