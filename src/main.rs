@@ -17,5 +17,7 @@ fn main() {
         "carcosa.net",
         "1965",
         "");
+    println!("{}", r.status);
+    println!("{}", r.mimetype);
     println!("{}", r.body);
 }

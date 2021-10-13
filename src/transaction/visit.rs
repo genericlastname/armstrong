@@ -12,7 +12,6 @@ pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
     let for_tcp = format!("{}:{}", address, port);
     // let for_dns = format!("{}", address);
     let request = format!("{}://{}:{}/{}\r\n", scheme, address, port, path);
-    let mut data = Vec::new();
 
     // TLS stuff.
     let mut root_store = rustls::RootCertStore::empty();
@@ -43,20 +42,31 @@ pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
         .expect("Can't open connection.");
 
     // Open gemini connection
-    println!("{}", for_tcp);
     let mut socket = TcpStream::connect(for_tcp)
         .expect("Can't connect to socket");
     let mut stream = rustls::Stream::new(&mut client, &mut socket);
 
+    // Get data
+    let mut data = Vec::new();
     stream.write(request.as_bytes()).unwrap();
     while client.wants_read() {
         client.read_tls(&mut socket).unwrap();
         client.process_new_packets().unwrap();
-        let _ = client.reader().read_to_end(&mut data);
     }
-    let raw_content = String::from_utf8_lossy(&data).to_string();
+    let _ = client.reader().read_to_end(&mut data);
+    let content = String::from_utf8_lossy(&data).to_string();
+    // println!("data: {}", header);
 
-    Response::new(&raw_content)
+    // Get body
+    // client.read_tls(&mut socket).unwrap();
+    // client.process_new_packets().unwrap();
+    // data = Vec::new();
+    // let _ = client.reader().read_to_end(&mut data);
+    // let body = String::from_utf8_lossy(&data).to_string();
+    // println!("body: {}", body);
+
+    // Response::new(&header, &body)
+    Response::new(&content)
 }
 
 #[cfg(test)]
