@@ -5,4 +5,5 @@ edition = "2018"
 
 [dependencies]
 webpki = "0.22.0"
-rustls = { version="0.19.1", features=["dangerous_configuration"] }
+webpki-roots = "0.22.0"
+rustls = { version="0.20.0", features=["dangerous_configuration"] }
