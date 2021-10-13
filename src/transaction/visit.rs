@@ -4,7 +4,7 @@ use std::net::TcpStream;
 use std::sync::Arc;
 
 use crate::transaction::response::Response;
-// use crate::transaction::dummy_verifier::DummyVerifier;
+use crate::transaction::dummy_verifier::DummyVerifier;
 
 // Visits the specified url at the given port and returns the resulting
 // Response.
@@ -28,12 +28,16 @@ pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
             )
         })
     );
-    let config = rustls::ClientConfig::builder()
+    let mut cfg = rustls::ClientConfig::builder()
         .with_safe_defaults()
         .with_root_certificates(root_store)
         .with_no_client_auth();
-    let rc_config = Arc::new(config);
-    // let dns_name = webpki::DnsNameRef::try_from_ascii_str(&for_dns).unwrap();
+    let mut config = rustls::client::DangerousClientConfig {
+        cfg: &mut cfg,
+    };
+    let dummy_verifier = Arc::new(DummyVerifier::new());
+    config.set_certificate_verifier(dummy_verifier);
+    let rc_config = Arc::new(cfg);
     let hostname: rustls::ServerName = address.try_into().unwrap();
     let mut client = rustls::ClientConnection::new(rc_config, hostname)
         .expect("Can't open connection.");
@@ -48,7 +52,7 @@ pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
     while client.wants_read() {
         client.read_tls(&mut socket).unwrap();
         client.process_new_packets().unwrap();
-        client.reader().read_to_end(&mut data).unwrap();
+        let _ = client.reader().read_to_end(&mut data);
     }
     let raw_content = String::from_utf8_lossy(&data).to_string();
 
