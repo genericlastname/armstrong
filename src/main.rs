@@ -10,5 +10,11 @@ pub mod transaction {
 }
 
 fn main() {
-    println!("Hello I'm not setup yet, try running `cargo test`");
+    // println!("Hello I'm not setup yet, try running `cargo test`");
+    let r: transaction::response::Response = transaction::visit::visit(
+        "gemini",
+        "carcosa.net",
+        "1965",
+        "");
+    // println!("{}", r.body);
 }
