@@ -55,7 +55,7 @@ pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
     let _ = client.reader().read_to_end(&mut data);
     let content = String::from_utf8_lossy(&data).to_string();
 
-    Response::new(&content)
+    Response::new(&content).expect("Visit failed")
 }
 
 #[cfg(test)]
