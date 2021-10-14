@@ -1,25 +1,7 @@
-// Handles errors in malformed server Responses
-#[derive(Clone, Debug)]
-pub struct ResponseError {
-    details: String,
-}
-
-impl std::fmt::Display for ResponseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Malformed response!")
-    }
-}
-
-impl ResponseError {
-    fn new(message: &str) -> ResponseError {
-        ResponseError { details: message.to_owned(), }
-    }
-}
-
 // A gemini Response containing:
 //    - status,
 //    - mimetype (default: text/gemini).
-//    - charset {optional},
+//    - charset (default: charset=utf-8),
 //    - body.
 #[derive(Debug)]
 pub struct Response {
@@ -87,6 +69,24 @@ impl Response {
                 })
             }
         }
+    }
+}
+
+// Handles errors in malformed server Responses
+#[derive(Clone, Debug)]
+pub struct ResponseError {
+    details: String,
+}
+
+impl std::fmt::Display for ResponseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Malformed response!")
+    }
+}
+
+impl ResponseError {
+    fn new(message: &str) -> ResponseError {
+        ResponseError { details: message.to_owned(), }
     }
 }
 
