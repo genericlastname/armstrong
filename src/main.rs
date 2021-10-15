@@ -6,6 +6,10 @@ pub mod transaction {
     pub mod visit;
 }
 
+pub mod ui {
+    pub mod tui;
+}
+
 fn main() {
     println!("Hello I'm not setup yet, try running `cargo test`");
 }

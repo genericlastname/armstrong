@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+cursive = "0.16.3"
+rustls = { version="0.20.0", features=["dangerous_configuration"] }
 webpki = "0.22.0"
 webpki-roots = "0.22.0"
-rustls = { version="0.20.0", features=["dangerous_configuration"] }
