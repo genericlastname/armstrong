@@ -13,12 +13,18 @@ pub mod ui {
 pub mod settings;
 
 use cursive::{Cursive, CursiveExt};
+use cursive::theme::*;
 
 fn main() {
     // println!("Hello I'm not setup yet, try running `cargo test`");
     let mut app = Cursive::new();
     ui::tui::configure_callbacks(&mut app);
     let r = transaction::visit::visit("gemini", "typed-hole.org", "1965", "");
-    ui::tui::client_screen(&mut app, &r);
+    let theme = Theme {
+        shadow: false,
+        borders: BorderStyle::Simple,
+        palette: Palette::default(),
+    };
+    ui::tui::client_screen(&mut app, &r, &theme);
     app.run();
 }

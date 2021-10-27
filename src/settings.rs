@@ -11,6 +11,8 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
+// use cursive::theme::{Color, Palette, Theme};
+
 pub fn create_config_file(override_path: &str) {
     let config_path: &Path;
     let config_path_string: String;
@@ -32,6 +34,11 @@ pub fn create_config_file(override_path: &str) {
                     e),
     }                    
 }
+
+// pub fn load_theme() -> Theme {
+//     let mut palette = Palette::default();
+//     palette.set_color
+// }
 
 #[cfg(test)]
 mod tests {
