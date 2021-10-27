@@ -1,3 +1,6 @@
+use cursive::utils::markup::StyledString;
+use cursive::theme::{Effect, Style};
+
 #[derive(Debug, PartialEq)]
 pub enum TokenKind {
     Text,
@@ -17,9 +20,41 @@ pub struct GemtextToken {
                         // named, when it will hold the user friendly name.
 }
 
-impl std::fmt::Display for GemtextToken {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "(\n\t{:?}\n\t{}\n)", self.kind, self.data)
+impl GemtextToken {
+    pub fn styled_string(&self) -> StyledString {
+        let styled_string: StyledString;
+        let data_copy = self.data.clone();
+
+        match self.kind {
+            TokenKind::Link => {
+                // Don't need the cloned data since format! Copies anyway.
+                let combined = format!("{} {}", self.data, self.extra);
+                styled_string = StyledString::styled(combined,
+                    Style::from(Effect::Underline));
+            },
+            TokenKind::Heading => {
+                let mut style = Style::default();
+                style.effects = Effect::Underline & Effect::Bold;
+                styled_string = StyledString::styled(data_copy.to_uppercase(),
+                    style);
+            },
+            TokenKind::SubHeading => {
+                let mut style = Style::default();
+                style.effects = Effect::Underline & Effect::Bold;
+                styled_string = StyledString::styled(data_copy,
+                    style);
+            },
+            TokenKind::SubSubHeading => {
+                styled_string = StyledString::styled(data_copy,
+                    Style::from(Effect::Bold));
+            },
+            _ => {
+                styled_string = StyledString::styled(data_copy,
+                    Style::default());
+            }
+        }
+
+        styled_string
     }
 }
 
