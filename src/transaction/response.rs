@@ -11,7 +11,6 @@ pub struct Response {
     pub body: String,
 }
 
-
 impl Response {
     pub fn new(data: &str) -> Result<Response, ResponseError> {
         // data_tokens[0] is the response header

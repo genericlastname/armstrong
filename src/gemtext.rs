@@ -1,5 +1,5 @@
-use cursive::utils::markup::StyledString;
 use cursive::theme::{Effect, Style};
+use cursive::utils::markup::StyledString;
 
 #[derive(Debug, PartialEq)]
 pub enum TokenKind {
@@ -48,6 +48,10 @@ impl GemtextToken {
                 styled_string = StyledString::styled(data_copy,
                     Style::from(Effect::Bold));
             },
+            TokenKind::PreFormattedText => {
+                styled_string = StyledString::styled(data_copy,
+                    Style::default());
+            },
             _ => {
                 styled_string = StyledString::styled(data_copy,
                     Style::default());
@@ -78,9 +82,13 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
             "##"  => { mode = TokenKind::SubHeading; },
             "#"   => { mode = TokenKind::Heading; },
             "```" => { 
-                curr_pft_state = !curr_pft_state;
-                prev_pft_state = false;
                 mode = TokenKind::PreFormattedText;
+                if curr_pft_state {
+                    curr_pft_state = false;
+                } else {
+                    prev_pft_state = false;
+                    curr_pft_state = true;
+                }
             },
             _     => {
                 if curr_pft_state {
@@ -101,7 +109,8 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
                             extra: text_tokens[2].to_owned(),
                         });
                     } else if mode == TokenKind::Text {
-                        // Combine [0], [1], and [2] since Text doesn't have a leading symbol.
+                        // Combine [0], [1], and [2] since Text doesn't have a
+                        // leading symbol.
                         gemtext_token_chain.push(GemtextToken {
                             kind: mode,
                             data: format!("{} {} {}",
@@ -114,7 +123,9 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
                         // Combine [1] and [2] in other parse modes.
                         gemtext_token_chain.push(GemtextToken {
                             kind: mode,
-                            data: format!("{} {}", text_tokens[1], text_tokens[2]),
+                            data: format!("{} {}",
+                                text_tokens[1],
+                                text_tokens[2]),
                             extra: "".to_owned(),
                         });
                     }
@@ -126,17 +137,36 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
                         extra: "".to_owned(),
                     });
                 },
-                _ => {},
+                _ => {
+                    // Preserve whitespace
+                    gemtext_token_chain.push(GemtextToken {
+                        kind: TokenKind::Text,
+                        data: "\n".to_owned(),
+                        extra: "".to_owned(),
+                    });
+                },
             }
         } else {
             if prev_pft_state {
-                gemtext_token_chain.push(GemtextToken {
-                    kind: mode,
-                    data: format!("{} {} {}", text_tokens[0], text_tokens[1], text_tokens[2]),
-                    extra: "".to_owned(),
-                });
+                if text_tokens.len() > 1 {
+                    gemtext_token_chain.push(GemtextToken {
+                        kind: mode,
+                        data: format!("{} {} {}\n",
+                            text_tokens[0],
+                            text_tokens[1],
+                            text_tokens[2]),
+                            extra: "".to_owned(),
+                    });
+                } else {
+                    gemtext_token_chain.push(GemtextToken {
+                        kind: mode,
+                        data: format!("{}\n", text_tokens[0]),
+                        extra: "".to_owned(),
+                    });
+                }
             } else {
                 prev_pft_state = true;
+                // TODO: Support PFT alt text
             }
         }
     }
