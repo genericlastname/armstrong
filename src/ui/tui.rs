@@ -38,8 +38,8 @@ pub fn client_screen(
     let text_area = ScrollView::new(TextView::new(styled_page_text))
         .scroll_y(true);
     let sized_view = ResizedView::new(
-        SizeConstraint::AtMost(100),
-        SizeConstraint::AtMost(40),
+        SizeConstraint::Fixed(100),
+        SizeConstraint::Full,
         text_area
     );
     let keybind_area = PaddedView::lrtb(
