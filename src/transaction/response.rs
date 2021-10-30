@@ -71,6 +71,16 @@ impl Response {
     }
 }
 
+pub fn create_fake_response(status: u8, message: &str) -> Response {
+    // TODO: Style this screen a bit more.
+    Response {
+        status: status,
+        mimetype: "text/gemini".to_owned(),
+        charset: "utf-8".to_owned(),
+        body: message.to_owned(),
+    }
+}
+
 // Handles errors in malformed server Responses
 #[derive(Clone, Debug)]
 pub struct ResponseError {

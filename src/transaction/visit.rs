@@ -1,9 +1,10 @@
 use std::convert::TryInto;
+use std::error::Error;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::Arc;
 
-use crate::transaction::response::Response;
+use crate::transaction::response::{create_fake_response, Response};
 use crate::transaction::dummy_verifier::DummyVerifier;
 
 // Visits the specified url at the given port and returns the resulting
@@ -41,8 +42,14 @@ pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
         .expect("Can't open connection.");
 
     // Open gemini connection
-    let mut socket = TcpStream::connect(for_tcp)
-        .expect("Can't connect to socket");
+    let socket = TcpStream::connect(for_tcp);
+    let mut socket = match socket {
+        Ok(socket) => socket,
+        Err(error) => {
+            return create_fake_response(20, &error.to_string());
+        }
+    };
+
     let mut stream = rustls::Stream::new(&mut client, &mut socket);
 
     // Get data
