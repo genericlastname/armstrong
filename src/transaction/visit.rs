@@ -43,8 +43,12 @@ pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
     config.set_certificate_verifier(dummy_verifier);
     let rc_config = Arc::new(cfg);
     let hostname: rustls::ServerName = address.try_into().unwrap();
-    let mut client = rustls::ClientConnection::new(rc_config, hostname)
-        .expect("Can't open connection.");
+    let mut client = match rustls::ClientConnection::new(rc_config, hostname) {
+        Ok(client) => client,
+        Err(error) => {
+            return create_fake_response(20, &error.to_string());
+        }
+    };
 
     // Open gemini connection
     let mut socket = match TcpStream::connect(for_tcp) {
