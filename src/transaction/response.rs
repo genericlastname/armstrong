@@ -20,7 +20,8 @@ impl Response {
         if data_tokens.len() < 2 {
             // This should never happen unless a gemini header is malformed or
             // missing.
-            return Err(ResponseError::new("<META> is missing from, header may be malformed"))
+            return Err(ResponseError::new(ResponseErrorKind::MissingMeta,
+                    "<META> is missing from, header may be malformed"))
         }
 
         // header_tokens[0] is the <STATUS> field.
@@ -29,7 +30,8 @@ impl Response {
         let status = header_tokens[0].parse();
         let status: u8 = match status {
             Ok(_s) => status.unwrap(),
-            Err(_e) => return Err(ResponseError::new("<STATUS> is missing, header may be malformed"))
+            Err(_e) => return Err(ResponseError::new(ResponseErrorKind::MissingStatus,
+                    "<STATUS> is missing, header may be malformed"))
         };
         let meta: &str;
         let charset: &str;
@@ -73,18 +75,26 @@ impl Response {
 
 pub fn create_fake_response(status: u8, message: &str) -> Response {
     // TODO: Style this screen a bit more.
+    let body = format!("Status\n {}\n\n{}", status, message);
     Response {
         status: status,
         mimetype: "text/gemini".to_owned(),
         charset: "utf-8".to_owned(),
-        body: message.to_owned(),
+        body: body,
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum ResponseErrorKind {
+    MissingMeta,
+    MissingStatus,
 }
 
 // Handles errors in malformed server Responses
 #[derive(Clone, Debug)]
 pub struct ResponseError {
     details: String,
+    kind: ResponseErrorKind,
 }
 
 impl std::fmt::Display for ResponseError {
@@ -94,8 +104,11 @@ impl std::fmt::Display for ResponseError {
 }
 
 impl ResponseError {
-    fn new(message: &str) -> ResponseError {
-        ResponseError { details: message.to_owned(), }
+    fn new(kind: ResponseErrorKind, message: &str) -> ResponseError {
+        ResponseError {
+            details: message.to_owned(),
+            kind: kind,
+        }
     }
 }
 

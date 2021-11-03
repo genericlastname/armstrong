@@ -4,7 +4,12 @@ use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::Arc;
 
-use crate::transaction::response::{create_fake_response, Response};
+use crate::transaction::response::{
+    create_fake_response, 
+    Response, 
+    ResponseError, 
+    ResponseErrorKind,
+};
 use crate::transaction::dummy_verifier::DummyVerifier;
 
 // Visits the specified url at the given port and returns the resulting
@@ -42,8 +47,7 @@ pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
         .expect("Can't open connection.");
 
     // Open gemini connection
-    let socket = TcpStream::connect(for_tcp);
-    let mut socket = match socket {
+    let mut socket = match TcpStream::connect(for_tcp) {
         Ok(socket) => socket,
         Err(error) => {
             return create_fake_response(20, &error.to_string());
@@ -62,7 +66,13 @@ pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
     let _ = client.reader().read_to_end(&mut data);
     let content = String::from_utf8_lossy(&data).to_string();
 
-    Response::new(&content).expect("Visit failed")
+    let response = match Response::new(&content) {
+        Ok(response) => response,
+        Err(error) => {
+            return create_fake_response(20, &error.to_string());
+        }
+    };
+    response
 }
 
 #[cfg(test)]
