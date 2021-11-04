@@ -1,5 +1,4 @@
 use std::convert::TryInto;
-use std::error::Error;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::Arc;
@@ -7,8 +6,6 @@ use std::sync::Arc;
 use crate::transaction::response::{
     create_fake_response, 
     Response, 
-    ResponseError, 
-    ResponseErrorKind,
 };
 use crate::transaction::dummy_verifier::DummyVerifier;
 

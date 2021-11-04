@@ -24,7 +24,7 @@ pub fn configure_callbacks(app: &mut Cursive) {
 pub fn client_screen(
     s: &mut Cursive,
     r: &Response,  // TODO: replace with GemtextTokenChain
-    t: &Theme)
+    _t: &Theme)
 {
     let token_chain: Vec<GemtextToken> = parse_gemtext(&r.body);
     // Generate StyledString from token_chain
