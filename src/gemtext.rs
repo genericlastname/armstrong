@@ -89,10 +89,10 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
     let raw_text_lines: Vec<String> = split_keep_crlf(raw_text);
     let mut current_pft_state: bool = false;
     let mut pft_block = String::new();
-    let mut pft_alt_text: &str = "";
+    let mut _pft_alt_text: &str = "";
 
     for line in raw_text_lines {
-        let mode: TokenKind;
+        let mut mode: TokenKind;
         let text_tokens: Vec<&str> = line.splitn(3, ' ').collect();
 
         if !current_pft_state {
@@ -103,12 +103,12 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
                 "###" => { mode = TokenKind::SubSubHeading; },
                 "##"  => { mode = TokenKind::SubHeading; },
                 "#"   => { mode = TokenKind::Heading; },
-                "```" | "```\n" => { 
-                    mode = TokenKind::PreFormattedText;
-                },
                 _     => {
                     mode = TokenKind::Text;
                 },
+            }
+            if text_tokens[0].starts_with("```") {
+                mode = TokenKind::PreFormattedText;
             }
 
             match text_tokens.len() {
@@ -144,7 +144,7 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
                 2 => {
                     if mode == TokenKind::PreFormattedText && !current_pft_state {
                         current_pft_state = true;
-                        pft_alt_text = text_tokens[1];
+                        _pft_alt_text = text_tokens[1];
                     }
                     else {
                         gemtext_token_chain.push(GemtextToken {
@@ -167,21 +167,18 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
                 }
             }
         } else {
-            match text_tokens[0] {
-                "```" | "```\n" => {
-                    let pft_block_copy = pft_block.clone();
-                    pft_block.clear();
-                    current_pft_state = false;
-                    // TODO: Support PFT alt text.
-                    gemtext_token_chain.push(GemtextToken {
-                        kind: TokenKind::PreFormattedText,
-                        data: pft_block_copy,
-                        extra: "".to_owned(),
-                    });
-                },
-                _ => {
-                    pft_block.push_str(&line);
-                }
+            if text_tokens[0].starts_with("```") {
+                let pft_block_copy = pft_block.clone();
+                pft_block.clear();
+                current_pft_state = false;
+                // TODO: Support PFT alt text.
+                gemtext_token_chain.push(GemtextToken {
+                    kind: TokenKind::PreFormattedText,
+                    data: pft_block_copy,
+                    extra: "".to_owned(),
+                });
+            } else {
+                pft_block.push_str(&line);
             }
         }
     }

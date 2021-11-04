@@ -19,7 +19,7 @@ fn main() {
     // println!("Hello I'm not setup yet, try running `cargo test`");
     let mut app = Cursive::new();
     ui::tui::configure_callbacks(&mut app);
-    let r = transaction::visit::visit("gemini", "breadpunk.club", "1965", "");
+    let r = transaction::visit::visit("gemini", "typed-hole.org", "1965", "");
     let theme = Theme {
         shadow: false,
         borders: BorderStyle::Simple,
