@@ -74,10 +74,10 @@ fn split_keep_crlf(raw_text: &str) -> Vec<String> {
     loop {
         buflen = reader.read_line(&mut current)
             .expect("Couldn't read buffer.");
+        if buflen == 0 { break; }
         let copy = current.clone();
         current.clear();
         lines.push(copy);
-        if buflen == 0 { break; }
     }
     lines
 }
@@ -87,7 +87,7 @@ fn split_keep_crlf(raw_text: &str) -> Vec<String> {
 pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
     let mut gemtext_token_chain = Vec::new();
     let raw_text_lines: Vec<String> = split_keep_crlf(raw_text);
-    let mut pft_state: bool = false;
+    let mut current_pft_state: bool = false;
     let mut pft_block = String::new();
     let mut pft_alt_text: &str = "";
 
@@ -95,44 +95,22 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
         let mode: TokenKind;
         let text_tokens: Vec<&str> = line.splitn(3, ' ').collect();
 
-        match text_tokens[0] {
-            "=>"  => { mode = TokenKind::Link; },
-            "*"   => { mode = TokenKind::UnorderedList; },
-            ">"   => { mode = TokenKind::Blockquote; },
-            "###" => { mode = TokenKind::SubSubHeading; },
-            "##"  => { mode = TokenKind::SubHeading; },
-            "#"   => { mode = TokenKind::Heading; },
-            "```" => { 
-                // Not really important this is set, it just needs to so the
-                // compiler doesn't complain about it being unset in some
-                // branches.
-                mode = TokenKind::PreFormattedText;
-                if !pft_state {
-                    pft_state = true;
-                    if text_tokens.len() > 1 {
-                        pft_alt_text = text_tokens[1];
-                    }
-                } else {
-                    pft_state = false;
-                    // Create GemtextToken here, out of sequence.
-                    pft_block.push_str(&line);
-                    if !pft_block.is_empty() {
-                        let pft_block_copy = pft_block.clone();
-                        gemtext_token_chain.push(GemtextToken {
-                            kind: TokenKind::PreFormattedText,
-                            data: pft_block_copy,
-                            extra: "".to_owned(),
-                        });
-                        pft_block.clear();
-                    }
-                }
-            },
-            _     => {
-                mode = TokenKind::Text;
-            },
-        }
+        if !current_pft_state {
+            match text_tokens[0] {
+                "=>"  => { mode = TokenKind::Link; },
+                "*"   => { mode = TokenKind::UnorderedList; },
+                ">"   => { mode = TokenKind::Blockquote; },
+                "###" => { mode = TokenKind::SubSubHeading; },
+                "##"  => { mode = TokenKind::SubHeading; },
+                "#"   => { mode = TokenKind::Heading; },
+                "```" | "```\n" => { 
+                    mode = TokenKind::PreFormattedText;
+                },
+                _     => {
+                    mode = TokenKind::Text;
+                },
+            }
 
-        if !pft_state {
             match text_tokens.len() {
                 3 => {
                     if mode == TokenKind::Link {
@@ -164,23 +142,46 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
                     }
                 },
                 2 => {
+                    if mode == TokenKind::PreFormattedText && !current_pft_state {
+                        current_pft_state = true;
+                        pft_alt_text = text_tokens[1];
+                    }
+                    else {
+                        gemtext_token_chain.push(GemtextToken {
+                            kind: mode,
+                            data: text_tokens[1].to_owned(),
+                            extra: "".to_owned(),
+                        });
+                    }
+                },
+                _ => {
+                    if mode == TokenKind::PreFormattedText && !current_pft_state {
+                        current_pft_state = true;
+                    } else {
+                        gemtext_token_chain.push(GemtextToken {
+                            kind: mode,
+                            data: text_tokens[0].to_owned(),
+                            extra: "".to_owned(),
+                        });
+                    }
+                }
+            }
+        } else {
+            match text_tokens[0] {
+                "```" | "```\n" => {
+                    let pft_block_copy = pft_block.clone();
+                    pft_block.clear();
+                    current_pft_state = false;
+                    // TODO: Support PFT alt text.
                     gemtext_token_chain.push(GemtextToken {
-                        kind: mode,
-                        data: text_tokens[1].to_owned(),
+                        kind: TokenKind::PreFormattedText,
+                        data: pft_block_copy,
                         extra: "".to_owned(),
                     });
                 },
                 _ => {
-                    gemtext_token_chain.push(GemtextToken {
-                        kind: mode,
-                        data: text_tokens[0].to_owned(),
-                        extra: "".to_owned(),
-                    })
+                    pft_block.push_str(&line);
                 }
-            }
-        } else {
-            if text_tokens[0] != "```" {
-                pft_block.push_str("Hola\n");
             }
         }
     }
@@ -250,8 +251,8 @@ mod tests {
             # Heading\n\
             ## SubHeading\n\
             ### SubSubHeading";
-        let line0 = "Heading";
-        let line1 = "SubHeading";
+        let line0 = "Heading\n";
+        let line1 = "SubHeading\n";
         let line2 = "SubSubHeading";
         let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
         assert_eq!(parsed.len(), 3);
@@ -270,7 +271,7 @@ mod tests {
             This text is unformatted.\n\
             This is the second line.\n\
             ```";
-        let line = "This text is unformatted.\nThis is the second line.";
+        let line = "This text is unformatted.\nThis is the second line.\n";
         let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
         assert_eq!(parsed.len(), 1);
         assert_eq!(parsed[0].kind, TokenKind::PreFormattedText);
