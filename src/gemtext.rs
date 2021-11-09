@@ -30,15 +30,19 @@ impl GemtextToken {
         match self.kind {
             TokenKind::Link => {
                 // Don't need the cloned data since format! Copies anyway.
-                let combined = format!("{} {}", self.data, self.extra);
-                styled_string = StyledString::styled(combined,
+                let disp: String;
+                if self.extra.is_empty() {
+                    disp = format!("→ {}", self.data);
+                } else {
+                    disp = format!("→ {}", self.extra);
+                }
+                styled_string = StyledString::styled(disp,
                     Style::from(Effect::Underline));
             },
             TokenKind::Heading => {
-                let mut style = Style::default();
-                style.effects = Effect::Underline & Effect::Bold;
+                let effect = Effect::Underline & Effect::Bold;
                 styled_string = StyledString::styled(data_copy.to_uppercase(),
-                    style);
+                    Style::from(Effect::Bold));
             },
             TokenKind::SubHeading => {
                 let mut style = Style::default();
