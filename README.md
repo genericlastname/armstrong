@@ -3,3 +3,8 @@
 
 Armstrong is a client for navigating sites on the lightweight, secure
 [Gemini](https://gemini.circumlunar.space/) protocol. 
+
+## License
+
+This software is licensed under the GNU GPLv3. See [LICENSE](LICENSE) for
+details.
