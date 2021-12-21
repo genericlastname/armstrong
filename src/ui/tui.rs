@@ -3,8 +3,10 @@ use cursive::theme::{
     BorderStyle,
     BaseColor::*,
     Color::*,
+    Effect,
     Palette,
     PaletteColor::*,
+    Style,
     Theme
 };
 use cursive::utils::markup::StyledString;
@@ -67,8 +69,10 @@ pub fn client_screen(
 
 pub fn test_screen(
     s: &mut Cursive,
-    r: &Response
-) {
+    r: &Response,
+    url: &str
+)
+{
     let mut palette = Palette::default();
     let colors = vec![
         (Background, Rgb(0, 0, 0)),
@@ -85,6 +89,12 @@ pub fn test_screen(
     let token_chain: Vec<GemtextToken> = parse_gemtext(&r.body);
     let styled_page_text = styled_string_from_token_chain(&token_chain);
 
+    // header view
+    let header_view = PaddedView::new(
+        Margins::lrtb(1, 0, 0, 0),
+        TextView::new(url).effect(Effect::Reverse));
+
+    // main page view
     let text_view = ResizedView::new(
         SizeConstraint::Fixed(100),
         SizeConstraint::Full,
@@ -97,5 +107,6 @@ pub fn test_screen(
     s.set_theme(theme);
     s.add_layer(
         LinearLayout::vertical()
-            .child(final_view));
+        .child(header_view)
+        .child(final_view));
 }
