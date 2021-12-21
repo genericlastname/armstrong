@@ -40,7 +40,8 @@ impl GemtextToken {
                     Style::from(Effect::Underline));
             },
             TokenKind::Heading => {
-                let effect = Effect::Underline & Effect::Bold;
+                // TODO: figure out how to combine effects.
+                // let effect = Effect::Underline & Effect::Bold;
                 styled_string = StyledString::styled(data_copy.to_uppercase(),
                     Style::from(Effect::Bold));
             },

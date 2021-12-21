@@ -6,8 +6,8 @@ use cursive::theme::{
     Effect,
     Palette,
     PaletteColor::*,
-    Style,
-    Theme
+    // Style,
+    Theme,
 };
 use cursive::utils::markup::StyledString;
 use cursive::view::{Margins, SizeConstraint};
@@ -92,6 +92,7 @@ pub fn test_screen(
     // header view
     let header_view = PaddedView::new(
         Margins::lrtb(1, 0, 0, 0),
+        // TODO: Remove deprecated function here.
         TextView::new(url).effect(Effect::Reverse));
 
     // main page view
