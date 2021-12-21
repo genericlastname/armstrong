@@ -17,6 +17,14 @@ use crate::transaction::response::Response;
 use crate::gemtext::{GemtextToken, parse_gemtext};
 // use crate::transaction::visit::visit;
 
+fn styled_string_from_token_chain(chain: &Vec<GemtextToken>) -> StyledString {
+    let mut styled_page_text = StyledString::new();
+    for token in chain {
+        styled_page_text.append(token.styled_string());
+    }
+    styled_page_text
+}
+
 pub fn configure_callbacks(app: &mut Cursive) {
     app.add_global_callback('q', |s| s.quit());
 }
@@ -27,13 +35,7 @@ pub fn client_screen(
     _t: &Theme)
 {
     let token_chain: Vec<GemtextToken> = parse_gemtext(&r.body);
-    // Generate StyledString from token_chain
-    let mut styled_page_text = StyledString::new();
-    for token in token_chain {
-        // styled_page_text.append(token.styled_string());
-        // styled_page_text.append("\n");
-        styled_page_text.append(token.styled_string());
-    }
+    let styled_page_text = styled_string_from_token_chain(&token_chain);
 
     let text_area = ScrollView::new(TextView::new(styled_page_text))
         .scroll_y(true);
