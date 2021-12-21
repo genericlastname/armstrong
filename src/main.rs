@@ -25,6 +25,6 @@ fn main() {
         borders: BorderStyle::Simple,
         palette: Palette::default(),
     };
-    ui::tui::client_screen(&mut app, &r, &theme);
+    ui::tui::test_screen(&mut app, &r);
     app.run();
 }

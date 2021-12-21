@@ -1,13 +1,18 @@
-// use cursive::align::Align;
 use cursive::Cursive;
-// use cursive::event;
-// use cursive::theme::{Palette, Theme, Color::*};
-use cursive::theme::Theme;
+use cursive::theme::{
+    BorderStyle,
+    BaseColor::*,
+    Color::*,
+    Palette,
+    PaletteColor::*,
+    Theme
+};
 use cursive::utils::markup::StyledString;
-use cursive::view::SizeConstraint;
+use cursive::view::{Margins, SizeConstraint};
 use cursive::views::{
     LinearLayout,
     PaddedView,
+    Panel,
     ResizedView,
     ScrollView,
     TextView,
@@ -31,7 +36,7 @@ pub fn configure_callbacks(app: &mut Cursive) {
 
 pub fn client_screen(
     s: &mut Cursive,
-    r: &Response,  // TODO: replace with GemtextTokenChain
+    r: &Response,
     _t: &Theme)
 {
     let token_chain: Vec<GemtextToken> = parse_gemtext(&r.body);
@@ -58,4 +63,39 @@ pub fn client_screen(
         LinearLayout::vertical()
             .child(sized_view)
             .child(keybind_area));
+}
+
+pub fn test_screen(
+    s: &mut Cursive,
+    r: &Response
+) {
+    let mut palette = Palette::default();
+    let colors = vec![
+        (Background, Rgb(0, 0, 0)),
+        (View, Rgb(0, 0, 0)),
+        (Primary, Light(White))
+    ];
+    palette.extend(colors);
+    let theme = Theme {
+        shadow: false,
+        borders: BorderStyle::Simple,
+        palette: palette,
+    };
+
+    let token_chain: Vec<GemtextToken> = parse_gemtext(&r.body);
+    let styled_page_text = styled_string_from_token_chain(&token_chain);
+
+    let text_view = ResizedView::new(
+        SizeConstraint::Fixed(100),
+        SizeConstraint::Full,
+        TextView::new(styled_page_text));
+    let final_view = Panel::new(
+        PaddedView::new(
+            Margins::lrtb(4, 4, 1, 1),
+            ScrollView::new(text_view).scroll_y(true)));
+
+    s.set_theme(theme);
+    s.add_layer(
+        LinearLayout::vertical()
+            .child(final_view));
 }
