@@ -11,9 +11,10 @@ use crate::transaction::dummy_verifier::DummyVerifier;
 
 // Visits the specified url at the given port and returns the resulting
 // Response.
-pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
+pub fn visit(scheme: &str, address: &str, port: &str, path: &str, url: &mut String) -> Response {
     let for_tcp = format!("{}:{}", address, port);
     let request = format!("{}://{}:{}/{}\r\n", scheme, address, port, path);
+    *url = format!("{}://{}/{}", scheme, address, path);
 
     // TLS stuff.
     let mut root_store = rustls::RootCertStore::empty();
@@ -82,13 +83,16 @@ mod tests {
 
     #[test]
     fn visit_to_valid_site_returns_ok_status() {
+        let mut url = String::new();
         let response: Response = visit(
             "gemini",
             "carcosa.net",
             "1965",
-            "");
+            "",
+            &mut url);
         assert_eq!(response.status, 20);
         assert_eq!(response.mimetype, "text/gemini");
         assert_eq!(response.charset, "utf-8");
+        assert_eq!(url, "gemini://carcosa.net/".to_owned());
     }
 }
