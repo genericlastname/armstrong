@@ -7,6 +7,7 @@ pub mod transaction {
 }
 
 pub mod ui {
+    pub mod client;
     pub mod tui;
 }
 
