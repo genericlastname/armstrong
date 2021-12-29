@@ -20,8 +20,9 @@ use cursive::views::{
     TextView,
 };
 
+use crate::gemtext::GemtextToken;
 use crate::transaction::response::{create_fake_response, Response};
-use crate::ui::tui::configure_callbacks;
+use crate::transaction::visit as t_visit;
 
 pub struct Client {
     app: Cursive,
@@ -35,7 +36,9 @@ pub struct Client {
 impl Client {
     pub fn new() -> Client {
         let mut app = Cursive::new();
-        configure_callbacks(&mut app);
+
+        // Callbacks and events.
+        app.add_global_callback('q', |s| s.quit());
 
         let mut palette = Palette::default();
         let colors = vec![
@@ -110,4 +113,12 @@ impl Client {
                         )))
                 .scroll_y(true)))
     }
+}
+
+fn styled_string_from_token_chain(chain: &Vec<GemtextToken>) -> StyledString {
+    let mut styled_page_text = StyledString::new();
+    for token in chain {
+        styled_page_text.append(token.styled_string());
+    }
+    styled_page_text
 }

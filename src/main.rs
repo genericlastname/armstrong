@@ -8,12 +8,10 @@ pub mod transaction {
 
 pub mod ui {
     pub mod client;
-    pub mod tui;
 }
 
 pub mod settings;
 
-// use cursive::{Cursive, CursiveExt};
 use ui::client::Client;
 
 fn main() {
@@ -21,11 +19,4 @@ fn main() {
     let mut client = Client::new();
     client.display();
     client.run();
-
-//     let mut app = Cursive::new();
-//     ui::tui::configure_callbacks(&mut app);
-//     let mut url = String::new();
-//     let r = transaction::visit::visit("gemini", "breadpunk.club", "1965", "", &mut url);
-//     ui::tui::test_screen(&mut app, &r, &url);
-//     app.run();
 }
