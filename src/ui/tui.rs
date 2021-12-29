@@ -22,7 +22,6 @@ use cursive::views::{
 
 use crate::transaction::response::Response;
 use crate::gemtext::{GemtextToken, parse_gemtext};
-// use crate::transaction::visit::visit;
 
 fn styled_string_from_token_chain(chain: &Vec<GemtextToken>) -> StyledString {
     let mut styled_page_text = StyledString::new();

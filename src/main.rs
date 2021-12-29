@@ -13,14 +13,19 @@ pub mod ui {
 
 pub mod settings;
 
-use cursive::{Cursive, CursiveExt};
+// use cursive::{Cursive, CursiveExt};
+use ui::client::Client;
 
 fn main() {
     // println!("Hello I'm not setup yet, try running `cargo test`");
-    let mut app = Cursive::new();
-    ui::tui::configure_callbacks(&mut app);
-    let mut url = String::new();
-    let r = transaction::visit::visit("gemini", "breadpunk.club", "1965", "", &mut url);
-    ui::tui::test_screen(&mut app, &r, &url);
-    app.run();
+    let mut client = Client::new();
+    client.display();
+    client.run();
+
+//     let mut app = Cursive::new();
+//     ui::tui::configure_callbacks(&mut app);
+//     let mut url = String::new();
+//     let r = transaction::visit::visit("gemini", "breadpunk.club", "1965", "", &mut url);
+//     ui::tui::test_screen(&mut app, &r, &url);
+//     app.run();
 }
