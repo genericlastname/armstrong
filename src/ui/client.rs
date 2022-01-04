@@ -14,13 +14,14 @@ use cursive::theme::{
 };
 use cursive::traits::*;
 use cursive::utils::markup::StyledString;
-use cursive::view::{Margins, SizeConstraint};
+use cursive::view::{Nameable, Margins, SizeConstraint};
 use cursive::views::{
     Button,
     Dialog,
     DummyView,
     EditView,
     LinearLayout,
+    ListView,
     PaddedView,
     Panel,
     ResizedView,
@@ -51,16 +52,57 @@ pub struct Client {
     history: Vec<History>,
     responses: HashMap<Url, Response>,
     tabs: Vec<Url>,
+    current_tab: usize,
 }
 
 impl Client {
-    pub fn new(&self) -> Client {
+    pub fn new(siv: &mut Cursive) -> Client {
+        let mut palette = Palette::default();
+        let colors = vec![
+            (Background, Rgb(0, 0, 0)),
+            (View, Rgb(0, 0, 0)),
+            (Primary, Light(White))
+        ];
+        palette.extend(colors);
+        let theme = Theme {
+            shadow: false,
+            borders: BorderStyle::Simple,
+            palette: palette,
+        };
+        siv.set_theme(theme);
+
+        // Create default layout
+        let content_view = PaddedView::new(
+            Margins::lrtb(4, 4, 1, 1),
+            ScrollView::new(
+                ResizedView::new(
+                    SizeConstraint::Fixed(100),
+                    SizeConstraint::Full,
+                    TextView::new("New tab")
+                    .with_name("content")
+                )
+            )
+        );
+
+        let ui_view = LinearLayout::vertical()
+            .child(PaddedView::new(
+                    Margins::lr(1, 0),
+                    LinearLayout::horizontal()
+                    .child(TextView::new("New tab"))
+                    .with_name("tab_bar")
+            ))
+            .child(Panel::new(content_view));
+
+        siv.add_layer(ui_view);
+
         Client {
             history: Vec::new(),
             responses: HashMap::new(),
             tabs: Vec::new(),
+            current_tab: 0,
         }
     }
+
 }
 
 fn styled_string_from_token_chain(chain: &Vec<GemtextToken>) -> StyledString {

@@ -13,9 +13,11 @@ pub mod ui {
 pub mod settings;
 
 use ui::client::Client;
+use cursive::{Cursive, CursiveExt};
 
 fn main() {
     // println!("Hello I'm not setup yet, try running `cargo test`");
-    // let mut client = Client::new();
-    let v = transaction::visit::visit("gemini://carcosa.net:1965");
+    let mut siv = Cursive::new();
+    let mut client = Client::new(&mut siv);
+    siv.run();
 }
