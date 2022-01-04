@@ -6,6 +6,6 @@ edition = "2021"
 [dependencies]
 cursive = "0.16.3"
 rustls = { version="0.20.0", features=["dangerous_configuration"] }
-toml = "0.5"
 webpki = "0.22.0"
 webpki-roots = "0.22.0"
+url = "2.2.2"

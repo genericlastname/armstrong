@@ -3,6 +3,8 @@ use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::Arc;
 
+use url::{Url, ParseError};
+
 use crate::transaction::response::{
     create_fake_response, 
     Response, 
@@ -11,9 +13,17 @@ use crate::transaction::dummy_verifier::DummyVerifier;
 
 // Visits the specified url at the given port and returns the resulting
 // Response.
-pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
-    let for_tcp = format!("{}:{}", address, port);
-    let request = format!("{}://{}:{}/{}\r\n", scheme, address, port, path);
+pub fn visit(s: &str) -> Response {
+    // TODO: Handle errors.
+    let url = Url::parse(s).unwrap();
+
+    // TODO: Handle a-base URLs (should fail).
+    let for_tcp = format!("{}:{}", url.host_str().unwrap(), url.port().unwrap());
+    let request = format!("{}://{}:{}/{}\r\n",
+        url.scheme(),
+        url.host_str().unwrap(),
+        url.port().unwrap(),
+        url.path());
 
     // TLS stuff.
     let mut root_store = rustls::RootCertStore::empty();
@@ -39,7 +49,7 @@ pub fn visit(scheme: &str, address: &str, port: &str, path: &str) -> Response {
     let dummy_verifier = Arc::new(DummyVerifier::new());
     config.set_certificate_verifier(dummy_verifier);
     let rc_config = Arc::new(cfg);
-    let hostname: rustls::ServerName = address.try_into().unwrap();
+    let hostname: rustls::ServerName = url.host_str().unwrap().try_into().unwrap();
     let mut client = match rustls::ClientConnection::new(rc_config, hostname) {
         Ok(client) => client,
         Err(error) => {
@@ -82,11 +92,7 @@ mod tests {
 
     #[test]
     fn visit_to_valid_site_returns_ok_status() {
-        let response: Response = visit(
-            "gemini",
-            "carcosa.net",
-            "1965",
-            "");
+        let response: Response = visit("gemini://carcosa.net:1965");
         assert_eq!(response.status, 20);
         assert_eq!(response.mimetype, "text/gemini");
         assert_eq!(response.charset, "utf-8");

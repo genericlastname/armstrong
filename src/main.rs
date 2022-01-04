@@ -16,8 +16,6 @@ use ui::client::Client;
 
 fn main() {
     // println!("Hello I'm not setup yet, try running `cargo test`");
-    let mut client = Client::new();
-    client.display();
-    client.url_dialog();
-    client.run();
+    // let mut client = Client::new();
+    let v = transaction::visit::visit("gemini://carcosa.net:1965");
 }
