@@ -27,20 +27,21 @@ use cursive::views::{
     ScrollView,
     TextView,
 };
+use url::{Url, ParseError};
 
 use crate::gemtext::GemtextToken;
 use crate::transaction::response::{create_fake_response, Response};
 use crate::transaction::visit as t_visit;
 
 struct History {
-    url: String,
+    url: Url,
     timestamp: SystemTime,
 }
 
 impl History {
     fn new(&self, url: &str) -> History {
         History {
-            url: url.to_owned(),
+            url: Url::parse(url).unwrap(),  // TODO: remove unwrap().
             timestamp: SystemTime::now(),
         }
     }
@@ -48,8 +49,18 @@ impl History {
 
 pub struct Client {
     history: Vec<History>,
-    responses: HashMap<String, Response>,
-    tabs: Vec<String>,
+    responses: HashMap<Url, Response>,
+    tabs: Vec<Url>,
+}
+
+impl Client {
+    pub fn new(&self) -> Client {
+        Client {
+            history: Vec::new(),
+            responses: HashMap::new(),
+            tabs: Vec::new(),
+        }
+    }
 }
 
 fn styled_string_from_token_chain(chain: &Vec<GemtextToken>) -> StyledString {
