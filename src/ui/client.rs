@@ -121,9 +121,10 @@ impl Client {
                 }).unwrap();
                 s.call_on_name("content", |view: &mut TextView| {
                     // let response = visit(&url);
-                    // let chain = parse_gemtext(&response.body);
-                    // view.set_content(styled_string_from_token_chain(&chain.clone()));
-                    view.set_content("Hello World");
+                    let response = visit("gemini://breadpunk.club/").unwrap();
+                    let chain = parse_gemtext(&response.body);
+                    view.set_content(styled_string_from_token_chain(&chain.clone()));
+                    // view.set_content("Hello World");
                 });
                 s.pop_layer();
             })
@@ -134,7 +135,7 @@ impl Client {
 
     // Backbone functions.
     fn goto(&mut self, s: &str) {
-        let response = visit(&s);
+        let response = visit(&s).unwrap();
         let url = Url::parse(s).unwrap();
 
         // self.responses.insert(url.clone(), response);

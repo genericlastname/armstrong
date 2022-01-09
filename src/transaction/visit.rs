@@ -1,9 +1,9 @@
-use std::convert::TryInto;
 use std::io::{Read, Write};
+use std::error::Error;
 use std::net::TcpStream;
 use std::sync::Arc;
 
-use url::{Url, ParseError};
+use url::Url;
 
 use crate::transaction::response::{
     create_fake_response, 
@@ -13,16 +13,16 @@ use crate::transaction::dummy_verifier::DummyVerifier;
 
 // Visits the specified url at the given port and returns the resulting
 // Response.
-pub fn visit(s: &str) -> Response {
+pub fn visit(s: &str) -> Result<Response, Box<dyn Error>> {
     // TODO: Handle errors.
-    let url = Url::parse(s).unwrap();
+    let url = Url::parse(s)?;
 
     // TODO: Handle a-base URLs (should fail).
-    let for_tcp = format!("{}:{}", url.host_str().unwrap(), url.port().unwrap());
+    let for_tcp = format!("{}:{}", url.host_str().unwrap(), 1965);
     let request = format!("{}://{}:{}/{}\r\n",
-        url.scheme(),
+        "gemini",
         url.host_str().unwrap(),
-        url.port().unwrap(),
+        1965,
         url.path());
 
     // TLS stuff.
@@ -53,7 +53,7 @@ pub fn visit(s: &str) -> Response {
     let mut client = match rustls::ClientConnection::new(rc_config, hostname) {
         Ok(client) => client,
         Err(error) => {
-            return create_fake_response(20, &error.to_string());
+            return Ok(create_fake_response(20, &error.to_string()));
         }
     };
 
@@ -61,7 +61,7 @@ pub fn visit(s: &str) -> Response {
     let mut socket = match TcpStream::connect(for_tcp) {
         Ok(socket) => socket,
         Err(error) => {
-            return create_fake_response(20, &error.to_string());
+            return Ok(create_fake_response(20, &error.to_string()));
         }
     };
 
@@ -80,10 +80,10 @@ pub fn visit(s: &str) -> Response {
     let response = match Response::new(&content) {
         Ok(response) => response,
         Err(error) => {
-            return create_fake_response(20, &error.to_string());
+            return Ok(create_fake_response(20, &error.to_string()));
         }
     };
-    response
+    Ok(response)
 }
 
 #[cfg(test)]
