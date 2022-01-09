@@ -30,9 +30,9 @@ use cursive::views::{
 };
 use url::{Url, ParseError};
 
-use crate::gemtext::GemtextToken;
+use crate::gemtext::{GemtextToken, parse_gemtext};
 use crate::transaction::response::{create_fake_response, Response};
-use crate::transaction::visit as t_visit;
+use crate::transaction::visit::visit;
 
 struct History {
     url: Url,
@@ -50,7 +50,8 @@ impl History {
 
 pub struct Client {
     history: Vec<History>,
-    responses: HashMap<Url, Response>,
+    // responses: HashMap<Url, Response>,
+    styled_bodies: Vec<StyledString>,
     tabs: Vec<Url>,
     current_tab: usize,
 }
@@ -97,12 +98,42 @@ impl Client {
 
         Client {
             history: Vec::new(),
-            responses: HashMap::new(),
+            // responses: HashMap::new(),
+            styled_bodies: Vec::new(),
             tabs: Vec::new(),
             current_tab: 0,
         }
     }
 
+    // Dialogs
+    pub fn goto_dialog(&self, siv: &mut Cursive) {
+        let layout = LinearLayout::vertical()
+            .child(DummyView)
+            .child(TextView::new("Example: gemini.circumlunar.space"))
+            .child(EditView::new()
+                .with_name("urlbox"));
+
+        siv.add_layer(Dialog::around(layout)
+            .title("Enter URL")
+            .button("Visit", |s| {
+            })
+            .button("Cancel", |s| {
+                s.pop_layer();
+            }));
+    }
+
+    // Backbone functions.
+    fn goto(&mut self, s: &str) {
+        let response = visit(&s);
+        let url = Url::parse(s).unwrap();
+
+        // self.responses.insert(url.clone(), response);
+        self.tabs[self.current_tab] = url;
+
+        let token_chain = parse_gemtext(&response.body);
+        self.styled_bodies[self.current_tab] = 
+            styled_string_from_token_chain(&token_chain);
+    }
 }
 
 fn styled_string_from_token_chain(chain: &Vec<GemtextToken>) -> StyledString {
