@@ -15,6 +15,7 @@ pub enum TokenKind {
     PreFormattedText,
 }
 
+#[derive(Clone)]
 pub struct GemtextToken {
     pub kind: TokenKind,
     pub data: String,

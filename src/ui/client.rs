@@ -116,6 +116,16 @@ impl Client {
         siv.add_layer(Dialog::around(layout)
             .title("Enter URL")
             .button("Visit", |s| {
+                let url = s.call_on_name("urlbox", |view: &mut EditView| {
+                    view.get_content()
+                }).unwrap();
+                s.call_on_name("content", |view: &mut TextView| {
+                    // let response = visit(&url);
+                    // let chain = parse_gemtext(&response.body);
+                    // view.set_content(styled_string_from_token_chain(&chain.clone()));
+                    view.set_content("Hello World");
+                });
+                s.pop_layer();
             })
             .button("Cancel", |s| {
                 s.pop_layer();
