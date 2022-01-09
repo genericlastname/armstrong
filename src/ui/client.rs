@@ -120,11 +120,10 @@ impl Client {
                     view.get_content()
                 }).unwrap();
                 s.call_on_name("content", |view: &mut TextView| {
-                    // let response = visit(&url);
-                    let response = visit("gemini://breadpunk.club/").unwrap();
+                    let response = visit(&url).unwrap();
+                    // let response = visit("gemini://breadpunk.club/").unwrap();
                     let chain = parse_gemtext(&response.body);
                     view.set_content(styled_string_from_token_chain(&chain.clone()));
-                    // view.set_content("Hello World");
                 });
                 s.pop_layer();
             })
