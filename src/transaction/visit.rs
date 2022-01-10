@@ -13,11 +13,7 @@ use crate::transaction::dummy_verifier::DummyVerifier;
 
 // Visits the specified url at the given port and returns the resulting
 // Response.
-pub fn visit(s: &str) -> Result<Response, Box<dyn Error>> {
-    // TODO: Handle errors.
-    let url = Url::parse(s)?;
-
-    // TODO: Handle a-base URLs (should fail).
+pub fn visit(url: Url) -> Response {
     let for_tcp = format!("{}:{}", url.host_str().unwrap(), 1965);
     let request = format!("{}://{}:{}/{}\r\n",
         "gemini",
@@ -53,7 +49,7 @@ pub fn visit(s: &str) -> Result<Response, Box<dyn Error>> {
     let mut client = match rustls::ClientConnection::new(rc_config, hostname) {
         Ok(client) => client,
         Err(error) => {
-            return Ok(create_fake_response(20, &error.to_string()));
+            return create_fake_response(20, &error.to_string());
         }
     };
 
@@ -61,7 +57,7 @@ pub fn visit(s: &str) -> Result<Response, Box<dyn Error>> {
     let mut socket = match TcpStream::connect(for_tcp) {
         Ok(socket) => socket,
         Err(error) => {
-            return Ok(create_fake_response(20, &error.to_string()));
+            return create_fake_response(20, &error.to_string());
         }
     };
 
@@ -80,10 +76,10 @@ pub fn visit(s: &str) -> Result<Response, Box<dyn Error>> {
     let response = match Response::new(&content) {
         Ok(response) => response,
         Err(error) => {
-            return Ok(create_fake_response(20, &error.to_string()));
+            return create_fake_response(20, &error.to_string());
         }
     };
-    Ok(response)
+    response
 }
 
 #[cfg(test)]
