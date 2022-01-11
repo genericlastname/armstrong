@@ -37,7 +37,12 @@ impl Client {
         }
     }
 
-    pub fn goto(&mut self, url: Url) {
+    pub fn goto(&mut self, s: &str) {
+        let url = Url::parse_with_params(s,
+            &[
+            ("scheme", "gemini"),
+            ("port", "1965")
+            ]).unwrap();
         self.urls[self.current_tab] = url.clone();
         let response = visit(url);
         let chain = parse_gemtext(&response.body);

@@ -1,4 +1,4 @@
-use cursive::Cursive;
+use cursive::{Cursive, CursiveExt};
 use cursive::theme::{
     BorderStyle,
     BaseColor::*,
@@ -28,12 +28,12 @@ use cursive::views::{
 use crate::ui::client::Client;
 
 pub struct Tui {
-    client: &'static Client,
+    client: Client,
     siv: Cursive,
 }
 
 impl Tui {
-    pub fn new(client: &'static Client) -> Tui {
+    pub fn new() -> Tui {
         let mut siv = Cursive::new();
 
         let mut palette = Palette::default();
@@ -75,8 +75,37 @@ impl Tui {
         siv.add_layer(ui_view);
 
         Tui {
-            client: client,
+            client: Client::new(),
             siv: siv,
         }
+    }
+
+    pub fn goto(&mut self) {
+        fn submit(siv: &mut Cursive, s: &str) {
+            siv.pop_layer();
+        }
+
+        let layout = LinearLayout::vertical()
+            .child(DummyView)
+            .child(TextView::new("Example: gemini.circumlunar.space"))
+            .child(EditView::new()
+                .on_submit(submit)
+                .with_name("urlbox"));
+
+        self.siv.add_layer(Dialog::around(layout)
+            .title("Enter URL")
+            .button("Visit", |s| {
+                let url = s.call_on_name("urlbox", |view: &mut EditView| {
+                    view.get_content()
+                }).unwrap();
+                submit(s, &url);
+            })
+            .button("Cancel", |s| {
+                s.pop_layer();
+            }));
+    }
+
+    pub fn run(&mut self) {
+        self.siv.run();
     }
 }

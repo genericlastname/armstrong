@@ -13,9 +13,12 @@ pub mod ui {
 
 pub mod settings;
 
-use ui::client::Client;
-use cursive::{Cursive, CursiveExt};
+use ui::tui::Tui;
+// use cursive::{Cursive, CursiveExt};
 
 fn main() {
     // println!("Hello I'm not setup yet, try running `cargo test`");
+    let mut tui = Tui::new();
+    tui.goto();
+    tui.run();
 }
