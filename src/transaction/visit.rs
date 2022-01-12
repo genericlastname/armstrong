@@ -13,7 +13,7 @@ use crate::transaction::dummy_verifier::DummyVerifier;
 
 // Visits the specified url at the given port and returns the resulting
 // Response.
-pub fn visit(url: Url) -> Response {
+pub fn visit(url: &Url) -> Response {
     let for_tcp = format!("{}:{}", url.host_str().unwrap(), 1965);
     let request = format!("{}://{}:{}/{}\r\n",
         "gemini",

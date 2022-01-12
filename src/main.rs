@@ -7,18 +7,16 @@ pub mod transaction {
 }
 
 pub mod ui {
-    pub mod client;
     pub mod tui;
 }
 
 pub mod settings;
 
-use ui::tui::Tui;
-// use cursive::{Cursive, CursiveExt};
+use cursive::CursiveExt;
+use ui::tui::*;
 
 fn main() {
     // println!("Hello I'm not setup yet, try running `cargo test`");
-    let mut tui = Tui::new();
-    tui.goto();
-    tui.run();
+    let mut app = init_ui();
+    app.run();
 }
