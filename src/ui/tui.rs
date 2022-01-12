@@ -37,7 +37,9 @@ pub fn init_ui() -> Cursive {
     let colors = vec![
         (Background, Rgb(0, 0, 0)),
         (View, Rgb(0, 0, 0)),
-        (Primary, Light(White))
+        (Primary, Light(White)),
+        (Secondary, Light(White)),
+        (TitlePrimary, Light(White)),
     ];
     palette.extend(colors);
     let theme = Theme {
