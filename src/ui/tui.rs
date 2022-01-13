@@ -4,15 +4,14 @@ use cursive::theme::{
     BorderStyle,
     BaseColor::*,
     Color::*,
-    Effect,
     Palette,
     PaletteColor::*,
     // Style,
     Theme,
 };
-// use cursive::traits::*;
-use cursive::view::{Nameable, Margins, SizeConstraint};
+use cursive::traits;
 use cursive::utils::markup::StyledString;
+use cursive::view::{Nameable, Margins, SizeConstraint};
 use cursive::views::{
     Dialog,
     DummyView,
@@ -73,23 +72,16 @@ pub fn init_ui() -> Cursive {
 
     let event_view = OnEventView::new(ui_view)
         .on_event('q', |s| s.quit())
-        .on_event(event::Event::Char('g'), |s: &mut Cursive|{
-            s.add_layer(Dialog::around(goto_dialog_layout())
-                .title("Enter URL")
-                .button("Visit", |t: &mut Cursive| {
-                    let url = t.call_on_name("urlbox", |view: &mut EditView| {
-                        view.get_content()
-                    }).unwrap();
-                    goto(t, &url);
-                })
-                .dismiss_button("Cancel"))
+        .on_event(event::Key::Esc, |s| s.quit())
+        .on_event(event::Event::Char('g'), |s: &mut Cursive| {
+            goto_dialog(s);
         });
 
     app.add_layer(event_view);
     app
 }
 
-pub fn goto(app: &mut Cursive, s: &str) {
+fn update_tab(app: &mut Cursive, s: &str) {
     let url = Url::parse(&s).unwrap();
     let response = visit(&url);
     let chain = parse_gemtext(&response.body);
@@ -100,15 +92,29 @@ pub fn goto(app: &mut Cursive, s: &str) {
     app.pop_layer();
 }
 
-pub fn goto_dialog_layout() -> LinearLayout {
-    LinearLayout::vertical()
+fn goto_dialog(app: &mut Cursive) {
+    let layout = LinearLayout::vertical()
         .child(DummyView)
         .child(TextView::new("Example: gemini.circumlunar.space"))
         .child(EditView::new()
-            .on_submit(goto)
-            .with_name("urlbox"))
-}
+            .on_submit(update_tab)
+            .with_name("urlbox"));
 
+    app.add_layer(
+        OnEventView::new(
+            Dialog::around(layout)
+            .title("Enter URL")
+            .button("Visit", |t: &mut Cursive| {
+                let url = t.call_on_name("urlbox", |view: &mut EditView| {
+                    view.get_content()
+                }).unwrap();
+                update_tab(t, &url);
+            })
+            .dismiss_button("Cancel"))
+        .on_event(event::Key::Esc, |s| {
+            s.pop_layer();
+        }));
+}
 
 // Helper funcs
 fn styled_string_from_token_chain(chain: &Vec<GemtextToken>) -> StyledString {
