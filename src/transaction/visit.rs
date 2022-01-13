@@ -10,8 +10,8 @@ use crate::transaction::response::{
 };
 use crate::transaction::dummy_verifier::DummyVerifier;
 
-// Visits the specified url at the given port and returns the resulting
-// Response.
+/// Visits the given Url and returns a Response. If an error is encountered the
+/// proper response code will be returned.
 pub fn visit(url: &Url) -> Response {
     let for_tcp = format!("{}:{}", url.host_str().unwrap(), 1965);
     let request = format!("{}://{}:{}/{}\r\n",
@@ -87,7 +87,8 @@ mod tests {
 
     #[test]
     fn visit_to_valid_site_returns_ok_status() {
-        let response: Response = visit("gemini://carcosa.net:1965");
+        let s = "gemini://carcosa.net:1965";
+        let response: Response = visit(&Url::parse(s).unwrap());
         assert_eq!(response.status, 20);
         assert_eq!(response.mimetype, "text/gemini");
         assert_eq!(response.charset, "utf-8");
