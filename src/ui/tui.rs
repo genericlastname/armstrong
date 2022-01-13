@@ -9,7 +9,6 @@ use cursive::theme::{
     // Style,
     Theme,
 };
-use cursive::traits;
 use cursive::utils::markup::StyledString;
 use cursive::view::{Nameable, Margins, SizeConstraint};
 use cursive::views::{
@@ -71,13 +70,12 @@ pub fn init_ui() -> Cursive {
         .child(Panel::new(page_view));
 
     let event_view = OnEventView::new(ui_view)
-        .on_event('q', |s| s.quit())
-        .on_event(event::Key::Esc, |s| s.quit())
-        .on_event(event::Event::Char('g'), |s: &mut Cursive| {
-            goto_dialog(s);
-        });
+        .on_event('q', |s| quit_dialog(s))
+        .on_event(event::Key::Esc, |s| quit_dialog(s))
+        .on_event(event::Event::Char('g'), |s: &mut Cursive| goto_dialog(s));
 
     app.add_layer(event_view);
+    goto_dialog(&mut app);
     app
 }
 
@@ -114,6 +112,25 @@ fn goto_dialog(app: &mut Cursive) {
         .on_event(event::Key::Esc, |s| {
             s.pop_layer();
         }));
+}
+
+fn quit_dialog(app: &mut Cursive) {
+    let layout = LinearLayout::vertical()
+        .child(DummyView)
+        .child(TextView::new(
+            "Are you sure you want to quit? (Press q again to exit)"
+    ));
+
+    app.add_layer(
+        OnEventView::new(
+            Dialog::around(layout)
+            .title("Quit")
+            .button("Quit", |s| s.quit())
+            .dismiss_button("Cancel")
+        )
+        .on_event('q', |s| s.quit())
+        .on_event(event::Key::Esc, |s| { s.pop_layer(); })
+    );
 }
 
 // Helper funcs
