@@ -8,6 +8,7 @@ pub mod transaction {
 
 pub mod ui {
     pub mod tui;
+    pub mod browser;
 }
 
 pub mod settings;
