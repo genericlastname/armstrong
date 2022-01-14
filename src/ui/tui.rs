@@ -50,15 +50,12 @@ pub fn init_ui() -> Cursive {
     // Create default layout
     let page_view = PaddedView::new(
         Margins::lrtb(4, 4, 1, 1),
-        ScrollView::new(
-            ResizedView::new(
-                SizeConstraint::Fixed(100),
-                SizeConstraint::Full,
+        ResizedView::new(
+            SizeConstraint::Fixed(100),
+            SizeConstraint::Full,
+            ScrollView::new(
                 TextView::new("New tab")
-                .with_name("page")
-            )
-        )
-    );
+                .with_name("page"))));
 
     let ui_view = LinearLayout::vertical()
         .child(PaddedView::new(
