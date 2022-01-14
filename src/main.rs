@@ -7,8 +7,9 @@ pub mod transaction {
 }
 
 pub mod ui {
-    pub mod tui;
     pub mod browser;
+    pub mod gemtextview;
+    pub mod tui;
 }
 
 pub mod settings;
