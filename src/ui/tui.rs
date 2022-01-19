@@ -9,8 +9,8 @@ use cursive::theme::{
     // Style,
     Theme,
 };
+use cursive::traits::{Nameable, Scrollable};
 use cursive::utils::markup::StyledString;
-use cursive::view::{Nameable, Margins, SizeConstraint};
 use cursive::views::{
     Dialog,
     DummyView,
@@ -20,7 +20,6 @@ use cursive::views::{
     PaddedView,
     Panel,
     ResizedView,
-    ScrollView,
     TextView,
 };
 use url::Url;
@@ -48,23 +47,16 @@ pub fn init_ui() -> Cursive {
     app.set_theme(theme);
 
     // Create default layout
-    let page_view = PaddedView::new(
-        Margins::lrtb(4, 4, 1, 1),
-        ResizedView::new(
-            SizeConstraint::Fixed(100),
-            SizeConstraint::Full,
-            ScrollView::new(
-                TextView::new("New tab")
-                .with_name("page"))));
+    let page_view = PaddedView::lrtb(
+        0, 4, 0, 0,
+        TextView::new("New tab").with_name("page"))
+        .scrollable();
 
     let ui_view = LinearLayout::vertical()
-        .child(PaddedView::new(
-                Margins::lr(1, 0),
-                LinearLayout::horizontal()
-                .child(TextView::new("New tab"))
-                .with_name("tab_bar")
-        ))
-        .child(Panel::new(page_view));
+        .child(Panel::new(
+                PaddedView::lrtb(
+                    4, 0, 1, 1,
+                    ResizedView::with_max_width(100, page_view))));
 
     let event_view = OnEventView::new(ui_view)
         .on_event('q', |s| quit_dialog(s))
