@@ -1,5 +1,5 @@
 use cursive::Cursive;
-use cursive::event;
+use cursive::event::Key;
 use cursive::theme::{
     BorderStyle,
     BaseColor::*,
@@ -9,9 +9,11 @@ use cursive::theme::{
     // Style,
     Theme,
 };
-use cursive::traits::{Nameable, Scrollable};
+use cursive::traits::{Nameable, Resizable, Scrollable};
 use cursive::utils::markup::StyledString;
+use cursive::view::SizeConstraint;
 use cursive::views::{
+    BoxedView,
     Dialog,
     DummyView,
     EditView,
@@ -20,6 +22,7 @@ use cursive::views::{
     PaddedView,
     Panel,
     ResizedView,
+    ScrollView,
     TextView,
 };
 use url::Url;
@@ -47,21 +50,29 @@ pub fn init_ui() -> Cursive {
     app.set_theme(theme);
 
     // Create default layout
-    let page_view = PaddedView::lrtb(
-        0, 4, 0, 0,
-        TextView::new("New tab").with_name("page"))
-        .scrollable();
+    let content = TextView::new("New tab")
+        .with_name("page");
 
-    let ui_view = LinearLayout::vertical()
-        .child(Panel::new(
-                PaddedView::lrtb(
-                    4, 0, 1, 1,
-                    ResizedView::with_max_width(100, page_view))));
+    let bordered_content = Panel::new(
+        PaddedView::lrtb(
+            2, 2, 1, 1,
+            content)
+        .resized(SizeConstraint::Full, SizeConstraint::Full)
+        .scrollable()
+        .with_name("scroll"));
 
-    let event_view = OnEventView::new(ui_view)
+    let layout = LinearLayout::vertical()
+        .child(bordered_content);
+
+    let event_view = OnEventView::new(layout)
         .on_event('q', |s| quit_dialog(s))
-        .on_event(event::Key::Esc, |s| quit_dialog(s))
-        .on_event(event::Event::Char('g'), |s: &mut Cursive| goto_dialog(s));
+        .on_event(Key::Esc, |s| quit_dialog(s))
+        .on_event('g', |s| goto_dialog(s))
+        .on_event('e', |s| {
+            s.call_on_name("scroll", |view: &mut ScrollView<BoxedView>| {
+                view.scroll_to_bottom();
+            });
+        });
 
     app.add_layer(event_view);
     goto_dialog(&mut app);
@@ -98,7 +109,7 @@ fn goto_dialog(app: &mut Cursive) {
                 update_tab(t, &url);
             })
             .dismiss_button("Cancel"))
-        .on_event(event::Key::Esc, |s| {
+        .on_event(Key::Esc, |s| {
             s.pop_layer();
         }));
 }
@@ -118,7 +129,7 @@ fn quit_dialog(app: &mut Cursive) {
             .dismiss_button("Cancel")
         )
         .on_event('q', |s| s.quit())
-        .on_event(event::Key::Esc, |s| { s.pop_layer(); })
+        .on_event(Key::Esc, |s| { s.pop_layer(); })
     );
 }
 
