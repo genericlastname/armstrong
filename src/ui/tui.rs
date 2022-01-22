@@ -70,7 +70,7 @@ pub fn init_ui() -> Cursive {
         .on_event('g', |s| goto_dialog(s))
         .on_event('e', |s| {
             s.call_on_name("scroll", |view: &mut ScrollView<BoxedView>| {
-                view.scroll_to_bottom();
+
             });
         });
 
@@ -96,6 +96,8 @@ fn goto_dialog(app: &mut Cursive) {
         .child(TextView::new("Example: gemini.circumlunar.space"))
         .child(EditView::new()
             .on_submit(update_tab)
+            .filler(" ")
+            .content("gemini://")
             .with_name("urlbox"));
 
     app.add_layer(
