@@ -151,8 +151,7 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
                     if mode == TokenKind::PreFormattedText && !current_pft_state {
                         current_pft_state = true;
                         _pft_alt_text = text_tokens[1];
-                    }
-                    else {
+                    } else {
                         gemtext_token_chain.push(GemtextToken {
                             kind: mode,
                             data: text_tokens[1].to_owned(),
@@ -206,25 +205,46 @@ mod tests {
     }
 
     #[test]
-    fn parser_handles_links() {
-        let raw_text = "=> www.example.com";
+    fn parser_handles_links_without_space() {
+        let raw_text_without_space = "=>www.example.com";
         let text_data = "www.example.com";
-        let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
-        assert_eq!(parsed.len(), 1);
-        assert_eq!(parsed[0].kind, TokenKind::Link);
-        assert_eq!(parsed[0].data, text_data);
+        let parsed_without_space: Vec<GemtextToken> =
+            parse_gemtext(raw_text_without_space);
+        assert_eq!(parsed_without_space.len(), 1);
+        assert_eq!(parsed_without_space[0].kind, TokenKind::Link);
+        assert_eq!(parsed_without_space[0].data, text_data);
+    }
+
+    #[test]
+    fn parser_handles_links_with_space() {
+        let raw_text_with_space = "=> www.example.com";
+        let text_data = "www.example.com";
+        let parsed_with_space: Vec<GemtextToken> =
+            parse_gemtext(raw_text_with_space);
+        assert_eq!(parsed_with_space.len(), 1);
+        assert_eq!(parsed_with_space[0].kind, TokenKind::Link);
+        assert_eq!(parsed_with_space[0].data, text_data);
     }
 
     #[test]
     fn parser_handles_links_with_names() {
-        let raw_text = "=> www.example.com Example Link";
+        let raw_text_with_space = "=> www.example.com Example Link";
+        let raw_text_without_space = "=>www.example.com Example Link";
         let text_data = "www.example.com";
         let extra_data = "Example Link";
-        let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
-        assert_eq!(parsed.len(), 1);
-        assert_eq!(parsed[0].kind, TokenKind::Link);
-        assert_eq!(parsed[0].data, text_data);
-        assert_eq!(parsed[0].extra, extra_data);
+        let parsed_with_space: Vec<GemtextToken>
+            = parse_gemtext(raw_text_with_space);
+        assert_eq!(parsed_with_space.len(), 1);
+        assert_eq!(parsed_with_space[0].kind, TokenKind::Link);
+        assert_eq!(parsed_with_space[0].data, text_data);
+        assert_eq!(parsed_with_space[0].extra, extra_data);
+
+        let parsed_without_space: Vec<GemtextToken>
+            = parse_gemtext(raw_text_without_space);
+        assert_eq!(parsed_without_space.len(), 1);
+        assert_eq!(parsed_without_space[0].kind, TokenKind::Link);
+        assert_eq!(parsed_without_space[0].data, text_data);
+        assert_eq!(parsed_without_space[0].extra, extra_data);
     }
 
     #[test]
