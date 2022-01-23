@@ -124,7 +124,7 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
                 // BLOCKQUOTES
                 gemtext_token_chain.push(GemtextToken {
                     kind: TokenKind::Blockquote,
-                    data: line[1..].trim().to_owned(),
+                    data: line[1..].trim_start().to_owned(),
                     extra: "".to_owned(),
                 });
             } else if line.starts_with("### ") {
