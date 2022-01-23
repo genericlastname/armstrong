@@ -12,6 +12,7 @@ use cursive::theme::{
 use cursive::traits::{Nameable, Resizable, Scrollable};
 use cursive::utils::markup::StyledString;
 use cursive::view::SizeConstraint;
+use cursive::view::scroll::Scroller;
 use cursive::views::{
     BoxedView,
     Dialog,
@@ -69,9 +70,11 @@ pub fn init_ui() -> Cursive {
         .on_event(Key::Esc, |s| quit_dialog(s))
         .on_event('g', |s| goto_dialog(s))
         .on_event('e', |s| {
-            s.call_on_name("scroll", |view: &mut ScrollView<BoxedView>| {
-
-            });
+            // let mut view
+            //     = s.find_name::<ScrollView<ResizedView<PaddedView<TextView>>>>("scroll")
+            //     .unwrap();
+            // let scroller = view.get_scroller_mut();
+            // scroller.scroll_to_bottom();
         });
 
     app.add_layer(event_view);
