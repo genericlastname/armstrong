@@ -90,7 +90,7 @@ fn split_keep_crlf(raw_text: &str) -> Vec<String> {
 
 // Take in a string of gemtext and convert it into a vector of GemtextTokens
 // with a kind and data.
-pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
+pub fn parse_gemtext_old(raw_text: &str) -> Vec<GemtextToken> {
     let mut gemtext_token_chain = Vec::new();
     let raw_text_lines: Vec<String> = split_keep_crlf(raw_text);
     let mut current_pft_state: bool = false;
@@ -184,6 +184,35 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
                 });
             } else {
                 pft_block.push_str(&line);
+            }
+        }
+    }
+
+    gemtext_token_chain
+}
+
+pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
+    let mut gemtext_token_chain = Vec::new();
+    let raw_text_lines = split_keep_crlf(raw_text);
+    let mut current_pft_state = false;
+    // let mut pft_block = String::new();
+
+    for line in raw_text_lines {
+        if !current_pft_state {
+            // LINKS
+            if line.starts_with("=>") {
+                let link_parts: Vec<&str>
+                    = line[2..].trim().splitn(2, ' ').collect();
+                let data = link_parts[0];
+                let extra;
+                if link_parts.len() == 2 { extra = link_parts[1]; }
+                else { extra = "" }
+                
+                gemtext_token_chain.push(GemtextToken {
+                    kind: TokenKind::Link,
+                    data: data.to_owned(),
+                    extra: extra.to_owned(),
+                })
             }
         }
     }
