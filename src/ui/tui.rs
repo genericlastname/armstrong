@@ -24,12 +24,13 @@ use cursive::views::{
     Panel,
     ResizedView,
     ScrollView,
+    SelectView,
     TextView,
 };
 use url::Url;
 
 use crate::transaction::visit::visit;
-use crate::gemtext::{GemtextToken, parse_gemtext};
+use crate::gemtext::{GemtextToken, parse_gemtext, TokenKind};
 
 pub fn init_ui() -> Cursive {
     let mut app = Cursive::new();
@@ -51,8 +52,11 @@ pub fn init_ui() -> Cursive {
     app.set_theme(theme);
 
     // Create default layout
-    let content = TextView::new("New tab")
+    // let content = TextView::new("New tab")
+    //     .with_name("page");
+    let content = LinearLayout::vertical()
         .with_name("page");
+    
 
     let bordered_content = Panel::new(
         PaddedView::lrtb(
@@ -68,14 +72,7 @@ pub fn init_ui() -> Cursive {
     let event_view = OnEventView::new(layout)
         .on_event('q', |s| quit_dialog(s))
         .on_event(Key::Esc, |s| quit_dialog(s))
-        .on_event('g', |s| goto_dialog(s))
-        .on_event('e', |s| {
-            // let mut view
-            //     = s.find_name::<ScrollView<ResizedView<PaddedView<TextView>>>>("scroll")
-            //     .unwrap();
-            // let scroller = view.get_scroller_mut();
-            // scroller.scroll_to_bottom();
-        });
+        .on_event('g', |s| goto_dialog(s));
 
     app.add_layer(event_view);
     goto_dialog(&mut app);
@@ -86,10 +83,18 @@ fn update_tab(app: &mut Cursive, s: &str) {
     let url = Url::parse(&s).unwrap();
     let response = visit(&url);
     let chain = parse_gemtext(&response.body);
-    let ss = styled_string_from_token_chain(&chain);
+    let mut page = app.find_name::<LinearLayout>("page").unwrap();
 
-    let mut page = app.find_name::<TextView>("page").unwrap();
-    page.set_content(ss);
+    for token in chain {
+        if token.kind == TokenKind::Link {
+            let selectview = SelectView::new()
+                .item(token.styled_string(), token.data);
+            page.add_child(selectview);
+        } else {
+            page.add_child(TextView::new(token.styled_string()));
+        }
+    }
+
     app.pop_layer();
 }
 
