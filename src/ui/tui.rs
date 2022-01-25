@@ -12,7 +12,6 @@ use cursive::theme::{
 use cursive::traits::{Nameable, Resizable, Scrollable};
 use cursive::utils::markup::StyledString;
 use cursive::view::SizeConstraint;
-use cursive::view::scroll::Scroller;
 use cursive::views::{
     BoxedView,
     Dialog,
@@ -150,13 +149,4 @@ fn quit_dialog(app: &mut Cursive) {
         .on_event('q', |s| s.quit())
         .on_event(Key::Esc, |s| { s.pop_layer(); })
     );
-}
-
-// Helper funcs
-fn styled_string_from_token_chain(chain: &Vec<GemtextToken>) -> StyledString {
-    let mut styled_page_text = StyledString::new();
-    for token in chain {
-        styled_page_text.append(token.styled_string());
-    }
-    styled_page_text
 }
