@@ -102,7 +102,7 @@ pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
             if line.starts_with("=>") {
                 // LINKS
                 let link_parts: Vec<&str>
-                    = line[2..].trim_start().splitn(2, ' ').collect();
+                    = line[2..].trim().splitn(2, ' ').collect();
                 let data = link_parts[0];
                 let extra;
                 if link_parts.len() == 2 { extra = link_parts[1]; }
