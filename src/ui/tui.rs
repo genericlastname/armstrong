@@ -52,22 +52,24 @@ pub fn init_ui() -> Cursive {
     app.set_theme(theme);
 
     // Create default layout
-    // let content = TextView::new("New tab")
-    //     .with_name("page");
     let content = LinearLayout::vertical()
-        .with_name("page");
+        .with_name("page")
+        .scrollable()
+        .with_name("scroll");
     
 
     let bordered_content = Panel::new(
         PaddedView::lrtb(
             2, 2, 1, 1,
             content)
-        .resized(SizeConstraint::Full, SizeConstraint::Full)
-        .scrollable()
-        .with_name("scroll"));
+        .resized(SizeConstraint::Full, SizeConstraint::Full));
+
+    let current_link = TextView::new("")
+        .with_name("current_link");
 
     let layout = LinearLayout::vertical()
-        .child(bordered_content);
+        .child(bordered_content)
+        .child(current_link);
 
     let event_view = OnEventView::new(layout)
         .on_event('q', |s| quit_dialog(s))
@@ -84,18 +86,25 @@ fn update_tab(app: &mut Cursive, s: &str) {
     let response = visit(&url);
     let chain = parse_gemtext(&response.body);
     let mut page = app.find_name::<LinearLayout>("page").unwrap();
+    // page.clear();
 
     for token in chain {
         if token.kind == TokenKind::Link {
             let selectview = SelectView::new()
-                .item(token.styled_string(), token.data);
+                .item(token.styled_string(), token.data)
+                .on_submit(|s, item| {
+                    update_tab(s, &item);
+                })
+            .on_select(|s, item| {
+                s.call_on_name("current_link", |view: &mut TextView| {
+                    view.set_content(item);
+                });
+            });
             page.add_child(selectview);
         } else {
             page.add_child(TextView::new(token.styled_string()));
         }
     }
-
-    app.pop_layer();
 }
 
 fn goto_dialog(app: &mut Cursive) {
