@@ -92,97 +92,84 @@ fn split_keep_crlf(raw_text: &str) -> Vec<String> {
 // with a kind and data.
 pub fn parse_gemtext(raw_text: &str) -> Vec<GemtextToken> {
     let mut gemtext_token_chain = Vec::new();
-    let raw_text_lines: Vec<String> = split_keep_crlf(raw_text);
-    let mut current_pft_state: bool = false;
+    let raw_text_lines = split_keep_crlf(raw_text);
+    let mut current_pft_state = false;
     let mut pft_block = String::new();
-    let mut _pft_alt_text: &str = "";
+    let mut pft_alt_text = String::new();
 
     for line in raw_text_lines {
-        let mut mode: TokenKind;
-        let text_tokens: Vec<&str> = line.splitn(3, ' ').collect();
-
         if !current_pft_state {
-            match text_tokens[0] {
-                "=>"  => { mode = TokenKind::Link; },
-                "*"   => { mode = TokenKind::UnorderedList; },
-                ">"   => { mode = TokenKind::Blockquote; },
-                "###" => { mode = TokenKind::SubSubHeading; },
-                "##"  => { mode = TokenKind::SubHeading; },
-                "#"   => { mode = TokenKind::Heading; },
-                _     => {
-                    mode = TokenKind::Text;
-                },
-            }
-            if text_tokens[0].starts_with("```") {
-                mode = TokenKind::PreFormattedText;
-            }
+            if line.starts_with("=>") {
+                // LINKS
+                let link_parts: Vec<&str>
+                    = line[2..].trim().splitn(2, ' ').collect();
+                let data = link_parts[0];
+                let extra;
+                if link_parts.len() == 2 { extra = link_parts[1]; }
+                else { extra = "" }
 
-            match text_tokens.len() {
-                3 => {
-                    if mode == TokenKind::Link {
-                        gemtext_token_chain.push(GemtextToken {
-                            kind: mode,
-                            data: text_tokens[1].to_owned(),
-                            extra: text_tokens[2].to_owned(),
-                        });
-                    } else if mode == TokenKind::Text {
-                        // Combine [0], [1], and [2] since Text doesn't have a
-                        // leading symbol.
-                        gemtext_token_chain.push(GemtextToken {
-                            kind: mode,
-                            data: format!("{} {} {}",
-                                text_tokens[0],
-                                text_tokens[1],
-                                text_tokens[2]),
-                                extra: "".to_owned(),
-                        });
-                    } else {
-                        // Combine [1] and [2] in other parse modes.
-                        gemtext_token_chain.push(GemtextToken {
-                            kind: mode,
-                            data: format!("{} {}",
-                                text_tokens[1],
-                                text_tokens[2]),
-                                extra: "".to_owned(),
-                        });
-                    }
-                },
-                2 => {
-                    if mode == TokenKind::PreFormattedText && !current_pft_state {
-                        current_pft_state = true;
-                        _pft_alt_text = text_tokens[1];
-                    }
-                    else {
-                        gemtext_token_chain.push(GemtextToken {
-                            kind: mode,
-                            data: text_tokens[1].to_owned(),
-                            extra: "".to_owned(),
-                        });
-                    }
-                },
-                _ => {
-                    if mode == TokenKind::PreFormattedText && !current_pft_state {
-                        current_pft_state = true;
-                    } else {
-                        gemtext_token_chain.push(GemtextToken {
-                            kind: mode,
-                            data: text_tokens[0].to_owned(),
-                            extra: "".to_owned(),
-                        });
-                    }
-                }
-            }
-        } else {
-            if text_tokens[0].starts_with("```") {
-                let pft_block_copy = pft_block.clone();
-                pft_block.clear();
-                current_pft_state = false;
-                // TODO: Support PFT alt text.
                 gemtext_token_chain.push(GemtextToken {
-                    kind: TokenKind::PreFormattedText,
-                    data: pft_block_copy,
+                    kind: TokenKind::Link,
+                    data: data.to_owned(),
+                    extra: extra.to_owned(),
+                });
+            } else if line.starts_with("* ") {
+                // UNORDERED LISTS
+                gemtext_token_chain.push(GemtextToken {
+                    kind: TokenKind::UnorderedList,
+                    data: line[2..].to_owned(),
                     extra: "".to_owned(),
                 });
+            } else if line.starts_with(">") {
+                // BLOCKQUOTES
+                gemtext_token_chain.push(GemtextToken {
+                    kind: TokenKind::Blockquote,
+                    data: line[1..].trim_start().to_owned(),
+                    extra: "".to_owned(),
+                });
+            } else if line.starts_with("### ") {
+                // SUBSUBHEADING
+                gemtext_token_chain.push(GemtextToken {
+                    kind: TokenKind::SubSubHeading,
+                    data: line[4..].to_owned(),
+                    extra: "".to_owned(),
+                });
+            } else if line.starts_with("## ") {
+                // SUBHEADING
+                gemtext_token_chain.push(GemtextToken {
+                    kind: TokenKind::SubHeading,
+                    data: line[3..].to_owned(),
+                    extra: "".to_owned(),
+                });
+            } else if line.starts_with("# ") {
+                // HEADING
+                gemtext_token_chain.push(GemtextToken {
+                    kind: TokenKind::Heading,
+                    data: line[2..].to_owned(),
+                    extra: "".to_owned(),
+                });
+            } else if line.starts_with("```") {
+                // PREFORMATTED TEXT
+                current_pft_state = true;
+                pft_alt_text = line[3..].trim().to_owned();
+            } else {
+                // TEXT
+                gemtext_token_chain.push(GemtextToken {
+                    kind: TokenKind::Text,
+                    data: line.to_owned(),
+                    extra: "".to_owned(),
+                });
+            }
+        } else {
+            if line.starts_with("```") {
+                gemtext_token_chain.push(GemtextToken {
+                    kind: TokenKind::PreFormattedText,
+                    data: pft_block.clone(),
+                    extra: pft_alt_text.clone(),
+                });
+                pft_block.clear();
+                pft_alt_text.clear();
+                current_pft_state = false;
             } else {
                 pft_block.push_str(&line);
             }
@@ -206,25 +193,46 @@ mod tests {
     }
 
     #[test]
-    fn parser_handles_links() {
-        let raw_text = "=> www.example.com";
+    fn parser_handles_links_without_space() {
+        let raw_text_without_space = "=>www.example.com";
         let text_data = "www.example.com";
-        let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
-        assert_eq!(parsed.len(), 1);
-        assert_eq!(parsed[0].kind, TokenKind::Link);
-        assert_eq!(parsed[0].data, text_data);
+        let parsed_without_space: Vec<GemtextToken> =
+            parse_gemtext(raw_text_without_space);
+        assert_eq!(parsed_without_space.len(), 1);
+        assert_eq!(parsed_without_space[0].kind, TokenKind::Link);
+        assert_eq!(parsed_without_space[0].data, text_data);
+    }
+
+    #[test]
+    fn parser_handles_links_with_space() {
+        let raw_text_with_space = "=> www.example.com";
+        let text_data = "www.example.com";
+        let parsed_with_space: Vec<GemtextToken> =
+            parse_gemtext(raw_text_with_space);
+        assert_eq!(parsed_with_space.len(), 1);
+        assert_eq!(parsed_with_space[0].kind, TokenKind::Link);
+        assert_eq!(parsed_with_space[0].data, text_data);
     }
 
     #[test]
     fn parser_handles_links_with_names() {
-        let raw_text = "=> www.example.com Example Link";
+        let raw_text_with_space = "=> www.example.com Example Link";
+        let raw_text_without_space = "=>www.example.com Example Link";
         let text_data = "www.example.com";
         let extra_data = "Example Link";
-        let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
-        assert_eq!(parsed.len(), 1);
-        assert_eq!(parsed[0].kind, TokenKind::Link);
-        assert_eq!(parsed[0].data, text_data);
-        assert_eq!(parsed[0].extra, extra_data);
+        let parsed_with_space: Vec<GemtextToken>
+            = parse_gemtext(raw_text_with_space);
+        assert_eq!(parsed_with_space.len(), 1);
+        assert_eq!(parsed_with_space[0].kind, TokenKind::Link);
+        assert_eq!(parsed_with_space[0].data, text_data);
+        assert_eq!(parsed_with_space[0].extra, extra_data);
+
+        let parsed_without_space: Vec<GemtextToken>
+            = parse_gemtext(raw_text_without_space);
+        assert_eq!(parsed_without_space.len(), 1);
+        assert_eq!(parsed_without_space[0].kind, TokenKind::Link);
+        assert_eq!(parsed_without_space[0].data, text_data);
+        assert_eq!(parsed_without_space[0].extra, extra_data);
     }
 
     #[test]
@@ -270,14 +278,16 @@ mod tests {
     #[test]
     fn parser_handles_pft() {
         let raw_text =
-            "```\n\
+            "```alt text\n\
             This text is unformatted.\n\
             This is the second line.\n\
             ```";
         let line = "This text is unformatted.\nThis is the second line.\n";
+        let alt_text = "alt text";
         let parsed: Vec<GemtextToken> = parse_gemtext(raw_text);
         assert_eq!(parsed.len(), 1);
         assert_eq!(parsed[0].kind, TokenKind::PreFormattedText);
         assert_eq!(parsed[0].data, line);
+        assert_eq!(parsed[0].extra, alt_text);
     }
 }

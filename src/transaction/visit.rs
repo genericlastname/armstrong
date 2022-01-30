@@ -87,7 +87,7 @@ mod tests {
 
     #[test]
     fn visit_to_valid_site_returns_ok_status() {
-        let response: Response = visit("gemini://carcosa.net:1965");
+        let response: Response = visit(&Url::parse("gemini://carcosa.net:1965").unwrap());
         assert_eq!(response.status, 20);
         assert_eq!(response.mimetype, "text/gemini");
         assert_eq!(response.charset, "utf-8");

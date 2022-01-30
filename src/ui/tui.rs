@@ -1,16 +1,15 @@
 use cursive::Cursive;
-use cursive::event;
+use cursive::event::Key;
 use cursive::theme::{
     BorderStyle,
     BaseColor::*,
     Color::*,
     Palette,
     PaletteColor::*,
-    // Style,
     Theme,
 };
-use cursive::utils::markup::StyledString;
-use cursive::view::{Nameable, Margins, SizeConstraint};
+use cursive::traits::{Nameable, Resizable, Scrollable};
+use cursive::view::SizeConstraint;
 use cursive::views::{
     Dialog,
     DummyView,
@@ -19,14 +18,14 @@ use cursive::views::{
     OnEventView,
     PaddedView,
     Panel,
-    ResizedView,
-    ScrollView,
+    SelectView,
     TextView,
+    ViewRef,
 };
 use url::Url;
 
 use crate::transaction::visit::visit;
-use crate::gemtext::{GemtextToken, parse_gemtext};
+use crate::gemtext::{parse_gemtext, TokenKind};
 
 pub fn init_ui() -> Cursive {
     let mut app = Cursive::new();
@@ -43,36 +42,33 @@ pub fn init_ui() -> Cursive {
     let theme = Theme {
         shadow: false,
         borders: BorderStyle::Simple,
-        palette: palette,
+        palette,
     };
     app.set_theme(theme);
 
     // Create default layout
-    let page_view = PaddedView::new(
-        Margins::lrtb(4, 4, 1, 1),
-        ScrollView::new(
-            ResizedView::new(
-                SizeConstraint::Fixed(100),
-                SizeConstraint::Full,
-                TextView::new("New tab")
-                .with_name("page")
-            )
-        )
-    );
+    let content = LinearLayout::vertical()
+        .with_name("content")
+        .scrollable()
+        .with_name("scroll");
 
-    let ui_view = LinearLayout::vertical()
-        .child(PaddedView::new(
-                Margins::lr(1, 0),
-                LinearLayout::horizontal()
-                .child(TextView::new("New tab"))
-                .with_name("tab_bar")
-        ))
-        .child(Panel::new(page_view));
+    let bordered_content = Panel::new(
+        PaddedView::lrtb(
+            2, 2, 1, 1,
+            content)
+        .resized(SizeConstraint::Full, SizeConstraint::Full));
 
-    let event_view = OnEventView::new(ui_view)
+    let current_link = TextView::new("")
+        .with_name("current_link");
+
+    let layout = LinearLayout::vertical()
+        .child(bordered_content)
+        .child(current_link);
+
+    let event_view = OnEventView::new(layout)
         .on_event('q', |s| quit_dialog(s))
-        .on_event(event::Key::Esc, |s| quit_dialog(s))
-        .on_event(event::Event::Char('g'), |s: &mut Cursive| goto_dialog(s));
+        .on_event(Key::Esc, |s| quit_dialog(s))
+        .on_event('g', |s| goto_dialog(s));
 
     app.add_layer(event_view);
     goto_dialog(&mut app);
@@ -83,11 +79,21 @@ fn update_tab(app: &mut Cursive, s: &str) {
     let url = Url::parse(&s).unwrap();
     let response = visit(&url);
     let chain = parse_gemtext(&response.body);
-    let ss = styled_string_from_token_chain(&chain);
+    // let mut content = app.find_name::<LinearLayout>("content").unwrap();
+    let mut content: ViewRef<LinearLayout> = app.find_name("content").unwrap();
 
-    let mut page = app.find_name::<TextView>("page").unwrap();
-    page.set_content(ss);
-    app.pop_layer();
+    for token in chain {
+        if token.kind == TokenKind::Link {
+            let selectview = SelectView::new()
+                .item(token.styled_string(), token.data)
+                .on_submit(|s, item| {
+                    update_tab(s, &item);
+                });
+            content.add_child(selectview);
+        } else {
+            content.add_child(TextView::new(token.styled_string()));
+        }
+    }
 }
 
 fn goto_dialog(app: &mut Cursive) {
@@ -96,6 +102,8 @@ fn goto_dialog(app: &mut Cursive) {
         .child(TextView::new("Example: gemini.circumlunar.space"))
         .child(EditView::new()
             .on_submit(update_tab)
+            .filler(" ")
+            .content("gemini://")
             .with_name("urlbox"));
 
     app.add_layer(
@@ -107,9 +115,10 @@ fn goto_dialog(app: &mut Cursive) {
                     view.get_content()
                 }).unwrap();
                 update_tab(t, &url);
+                t.pop_layer();
             })
             .dismiss_button("Cancel"))
-        .on_event(event::Key::Esc, |s| {
+        .on_event(Key::Esc, |s| {
             s.pop_layer();
         }));
 }
@@ -129,15 +138,6 @@ fn quit_dialog(app: &mut Cursive) {
             .dismiss_button("Cancel")
         )
         .on_event('q', |s| s.quit())
-        .on_event(event::Key::Esc, |s| { s.pop_layer(); })
+        .on_event(Key::Esc, |s| { s.pop_layer(); })
     );
-}
-
-// Helper funcs
-fn styled_string_from_token_chain(chain: &Vec<GemtextToken>) -> StyledString {
-    let mut styled_page_text = StyledString::new();
-    for token in chain {
-        styled_page_text.append(token.styled_string());
-    }
-    styled_page_text
 }
