@@ -6,14 +6,11 @@ use cursive::theme::{
     Color::*,
     Palette,
     PaletteColor::*,
-    // Style,
     Theme,
 };
 use cursive::traits::{Nameable, Resizable, Scrollable};
-use cursive::utils::markup::StyledString;
 use cursive::view::SizeConstraint;
 use cursive::views::{
-    BoxedView,
     Dialog,
     DummyView,
     EditView,
@@ -21,15 +18,14 @@ use cursive::views::{
     OnEventView,
     PaddedView,
     Panel,
-    ResizedView,
-    ScrollView,
     SelectView,
     TextView,
+    ViewRef,
 };
 use url::Url;
 
 use crate::transaction::visit::visit;
-use crate::gemtext::{GemtextToken, parse_gemtext, TokenKind};
+use crate::gemtext::{parse_gemtext, TokenKind};
 
 pub fn init_ui() -> Cursive {
     let mut app = Cursive::new();
@@ -46,16 +42,15 @@ pub fn init_ui() -> Cursive {
     let theme = Theme {
         shadow: false,
         borders: BorderStyle::Simple,
-        palette: palette,
+        palette,
     };
     app.set_theme(theme);
 
     // Create default layout
     let content = LinearLayout::vertical()
-        .with_name("page")
+        .with_name("content")
         .scrollable()
         .with_name("scroll");
-    
 
     let bordered_content = Panel::new(
         PaddedView::lrtb(
@@ -84,8 +79,8 @@ fn update_tab(app: &mut Cursive, s: &str) {
     let url = Url::parse(&s).unwrap();
     let response = visit(&url);
     let chain = parse_gemtext(&response.body);
-    let mut page = app.find_name::<LinearLayout>("page").unwrap();
-    // page.clear();
+    // let mut content = app.find_name::<LinearLayout>("content").unwrap();
+    let mut content: ViewRef<LinearLayout> = app.find_name("content").unwrap();
 
     for token in chain {
         if token.kind == TokenKind::Link {
@@ -93,15 +88,10 @@ fn update_tab(app: &mut Cursive, s: &str) {
                 .item(token.styled_string(), token.data)
                 .on_submit(|s, item| {
                     update_tab(s, &item);
-                })
-            .on_select(|s, item| {
-                s.call_on_name("current_link", |view: &mut TextView| {
-                    view.set_content(item);
                 });
-            });
-            page.add_child(selectview);
+            content.add_child(selectview);
         } else {
-            page.add_child(TextView::new(token.styled_string()));
+            content.add_child(TextView::new(token.styled_string()));
         }
     }
 }
@@ -125,6 +115,7 @@ fn goto_dialog(app: &mut Cursive) {
                     view.get_content()
                 }).unwrap();
                 update_tab(t, &url);
+                t.pop_layer();
             })
             .dismiss_button("Cancel"))
         .on_event(Key::Esc, |s| {
